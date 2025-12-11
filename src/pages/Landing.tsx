@@ -43,18 +43,19 @@ export function Landing() {
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-20">
         <div className="max-w-md w-full mx-auto animate-fade-in">
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 relative">
             <div className="inline-flex items-center justify-center mb-6">
               <img 
                 src="/HandyCardsLogo.svg" 
                 alt="Ecom HQ Logo" 
-                className="h-20 w-auto"
+                className="h-20 w-auto absolute border border-black/10"
+                style={{ left: '185px', top: '136px' }}
               />
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-3 tracking-tight">
+            <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-3 tracking-tight invisible">
               Ecom HQ
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground" style={{ color: 'rgba(255, 255, 255, 0.75)' }}>
               Our shared workspace for the e-commerce journey
             </p>
           </div>
@@ -127,7 +128,7 @@ export function Landing() {
 
       {/* Footer */}
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p>Built By Mej 4 Da Boys</p>
+        <p style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Built By Mej 4 Da Boys</p>
       </footer>
     </div>
   );
