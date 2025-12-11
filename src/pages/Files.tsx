@@ -38,7 +38,15 @@ export function Files() {
       await queryClient.invalidateQueries({ queryKey: ['files'] });
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload files');
+      let errorMessage = 'Failed to upload files';
+      if (err instanceof Error) {
+        if (err.message.includes('Bucket not found') || err.message.includes('bucket')) {
+          errorMessage = 'Storage bucket not found. Please create a "files" bucket in Supabase Storage. See SUPABASE_SETUP.md for instructions.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      setError(errorMessage);
     } finally {
       setUploading(false);
     }
@@ -57,7 +65,15 @@ export function Files() {
       await queryClient.invalidateQueries({ queryKey: ['files'] });
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload files');
+      let errorMessage = 'Failed to upload files';
+      if (err instanceof Error) {
+        if (err.message.includes('Bucket not found') || err.message.includes('bucket')) {
+          errorMessage = 'Storage bucket not found. Please create a "files" bucket in Supabase Storage. See SUPABASE_SETUP.md for instructions.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      setError(errorMessage);
     } finally {
       setUploading(false);
       e.target.value = '';

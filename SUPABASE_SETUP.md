@@ -14,16 +14,25 @@ This will create all necessary tables:
 - `files` - For storing file metadata (includes `storage_path` column for Supabase Storage)
 - `activity` - For storing activity logs
 
-## 1.1. Create Storage Bucket
+## 1.1. Create Storage Bucket ⚠️ REQUIRED FOR FILE UPLOADS
+
+**IMPORTANT:** File uploads will fail with "Bucket not found" error until this step is completed!
 
 For file uploads and downloads to work, you need to create a Supabase Storage bucket:
 
-1. Go to your Supabase project dashboard
-2. Navigate to **Storage** in the left sidebar
-3. Click **New bucket**
-4. Name it: `files`
-5. Make it **Public** (or set up RLS policies for authenticated users)
-6. Click **Create bucket**
+1. Go to your Supabase project dashboard: https://supabase.com/dashboard
+2. Select your project
+3. Navigate to **Storage** in the left sidebar
+4. Click **New bucket** button
+5. Name it exactly: `files` (must match exactly)
+6. Choose one of these options:
+   - **Option A (Recommended for shared workspace):** Make it **Public** - allows all authenticated users to upload/download
+   - **Option B:** Make it **Private** and set up RLS policies (see below)
+7. Click **Create bucket**
+
+**Verify the bucket was created:**
+- You should see a bucket named `files` in your Storage list
+- If you don't see it, refresh the page and check again
 
 **Storage RLS Policies (if bucket is private):**
 If you made the bucket private, you'll need to add RLS policies. Go to Storage > Policies and add:
