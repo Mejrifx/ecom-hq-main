@@ -48,14 +48,28 @@ export function Landing() {
               <img 
                 src="/HandyCardsLogo.svg" 
                 alt="Ecom HQ Logo" 
-                className="h-20 w-auto absolute border border-black/10"
-                style={{ left: '185px', top: '136px' }}
+                className="h-20 w-auto"
+                style={{ 
+                  position: 'absolute',
+                  left: '185px',
+                  top: '136px',
+                  borderWidth: '1px',
+                  borderColor: 'rgba(0, 0, 0, 0.1)',
+                  backgroundColor: 'rgba(255, 255, 255, 0)'
+                }}
               />
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-3 tracking-tight invisible">
+            <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-3 tracking-tight" style={{ visibility: 'hidden' }}>
               Ecom HQ
             </h1>
-            <p className="text-muted-foreground" style={{ color: 'rgba(255, 255, 255, 0.75)' }}>
+            <p 
+              className="text-muted-foreground" 
+              style={{ 
+                color: 'rgba(255, 255, 255, 0.75)',
+                backgroundClip: 'unset',
+                WebkitBackgroundClip: 'unset'
+              }}
+            >
               Our shared workspace for the e-commerce journey
             </p>
           </div>
