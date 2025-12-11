@@ -49,24 +49,12 @@ export function Landing() {
                 src="/HandyCardsLogo.svg" 
                 alt="Ecom HQ Logo" 
                 className="h-20 w-auto"
-                style={{ 
-                  borderWidth: '1px',
-                  borderColor: 'rgba(0, 0, 0, 0.1)',
-                  backgroundColor: 'rgba(255, 255, 255, 0)'
-                }}
               />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight" style={{ display: 'none' }}>
               Ecom HQ
             </h1>
-            <p 
-              className="text-muted-foreground" 
-              style={{ 
-                color: 'rgba(255, 255, 255, 0.75)',
-                backgroundClip: 'unset',
-                WebkitBackgroundClip: 'unset'
-              }}
-            >
+            <p className="text-muted-foreground">
               Our shared workspace for the e-commerce journey
             </p>
           </div>
@@ -139,7 +127,7 @@ export function Landing() {
 
       {/* Footer */}
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Built By Mej 4 Da Boys</p>
+        <p>Built By Mej 4 Da Boys</p>
       </footer>
     </div>
   );

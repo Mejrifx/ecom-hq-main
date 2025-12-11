@@ -58,3 +58,4 @@ console.log('Key:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Set' : 'Missing');
 If both show values, the environment variables are loading correctly.
 
 
+
