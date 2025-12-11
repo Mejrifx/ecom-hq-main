@@ -34,8 +34,11 @@ For file uploads and downloads to work, you need to create a Supabase Storage bu
 - You should see a bucket named `files` in your Storage list
 - If you don't see it, refresh the page and check again
 
-**Storage RLS Policies (if bucket is private):**
-If you made the bucket private, you'll need to add RLS policies. Go to Storage > Policies and add:
+**Storage RLS Policies (REQUIRED):**
+**IMPORTANT:** Even if you made the bucket public, you may still need RLS policies. Run the SQL from `fix-storage-rls.sql` in your Supabase SQL Editor, or manually add these policies:
+
+1. Go to Supabase Dashboard → SQL Editor
+2. Run the SQL from `fix-storage-rls.sql` file, or copy this:
 
 ```sql
 -- Allow authenticated users to upload files
@@ -44,18 +47,25 @@ ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'files');
 
--- Allow authenticated users to read files
+-- Allow authenticated users to read/download files
 CREATE POLICY "Allow authenticated reads"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (bucket_id = 'files');
 
--- Allow authenticated users to delete their own files
+-- Allow authenticated users to delete files
 CREATE POLICY "Allow authenticated deletes"
 ON storage.objects FOR DELETE
 TO authenticated
 USING (bucket_id = 'files');
 ```
+
+**Alternative: Make bucket public**
+If you prefer, you can make the bucket public instead:
+1. Go to Storage → files bucket
+2. Click the bucket settings
+3. Toggle "Public bucket" to ON
+4. This removes the need for RLS policies (but files will be publicly accessible)
 
 ## 2. Environment Variables
 
@@ -99,18 +109,16 @@ If you encounter connection issues:
 4. Verify RLS policies allow authenticated users (see schema)
 5. Make sure you've created user accounts (see `AUTHENTICATION_SETUP.md`)
 
-### File Upload RLS Error
+### File Upload RLS Errors
 
-If you get "new row violates row-level security policy" when uploading files:
+**Database RLS Error:** If you get "new row violates row-level security policy" when uploading files (database error):
 
 1. Go to Supabase Dashboard → SQL Editor
-2. Run the SQL from `fix-files-rls.sql` to fix the RLS policies
-3. Or manually run this SQL:
+2. Run the SQL from `fix-files-rls.sql` to fix the database RLS policies
 
-```sql
-DROP POLICY IF EXISTS "Authenticated users can insert files" ON files;
-CREATE POLICY "Authenticated users can insert files" ON files
-  FOR INSERT 
-  WITH CHECK (auth.role() = 'authenticated');
-```
+**Storage RLS Error:** If you get "new row violates row-level security policy" from Storage (StorageApiError):
+
+1. Go to Supabase Dashboard → SQL Editor
+2. Run the SQL from `fix-storage-rls.sql` to fix the Storage RLS policies
+3. Or make your bucket public (see Storage RLS Policies section above)
 
