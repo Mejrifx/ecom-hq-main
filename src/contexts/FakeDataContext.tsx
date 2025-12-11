@@ -31,8 +31,8 @@ type Action =
   | { type: 'UPDATE_RECIPE'; payload: RecipeCard }
   | { type: 'DELETE_RECIPE'; payload: string }
   | { type: 'DUPLICATE_RECIPE'; payload: string }
-  | { type: 'ADD_FILE'; payload: FileItem }
-  | { type: 'DELETE_FILE'; payload: string }
+  | { type: 'ADD_FILE'; payload: File }
+  | { type: 'DELETE_FILE'; payload: { id: string; storagePath?: string } }
   | { type: 'ADD_ACTIVITY'; payload: ActivityItem };
 
 interface DataContextValue {
@@ -140,14 +140,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   });
 
   const createFileMutation = useMutation({
-    mutationFn: filesService.create,
+    mutationFn: filesService.upload,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files'] });
     },
   });
 
   const deleteFileMutation = useMutation({
-    mutationFn: filesService.delete,
+    mutationFn: ({ id, storagePath }: { id: string; storagePath?: string }) => 
+      filesService.delete(id, storagePath),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files'] });
     },
@@ -213,12 +214,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         }
         break;
       }
-      case 'ADD_FILE': {
-        const { id, addedAt, ...fileData } = action.payload;
-        createFileMutation.mutate(fileData);
+      case 'ADD_FILE':
+        // Action payload should be a File object for upload
+        if (action.payload instanceof File) {
+          createFileMutation.mutate(action.payload);
+        }
         break;
-      }
       case 'DELETE_FILE':
+        // Action payload should be { id, storagePath }
         deleteFileMutation.mutate(action.payload);
         break;
       case 'ADD_ACTIVITY': {

@@ -32,6 +32,7 @@ export interface FileItem {
   name: string;
   size: number;
   addedAt: Date;
+  storagePath?: string; // Path in Supabase Storage
 }
 
 export interface ActivityItem {

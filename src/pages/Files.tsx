@@ -1,11 +1,15 @@
 import React, { useState, useCallback } from 'react';
-import { Upload, File, Trash2, HardDrive } from 'lucide-react';
+import { Upload, File, Trash2, HardDrive, Download, Loader2 } from 'lucide-react';
 import { useData } from '../contexts/FakeDataContext';
 import { FileItem } from '../types';
+import { filesService } from '../lib/supabase-service';
 
 export function Files() {
   const { state, dispatch } = useData();
   const [isDragOver, setIsDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -17,38 +21,64 @@ export function Files() {
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
+    setError(null);
+    setUploading(true);
 
     const droppedFiles = Array.from(e.dataTransfer.files);
-    droppedFiles.forEach(file => {
-      const fileItem: FileItem = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        size: file.size,
-        addedAt: new Date(),
-      };
-      dispatch({ type: 'ADD_FILE', payload: fileItem });
-    });
+    try {
+      for (const file of droppedFiles) {
+        dispatch({ type: 'ADD_FILE', payload: file });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload files');
+    } finally {
+      setUploading(false);
+    }
   }, [dispatch]);
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
-    selectedFiles.forEach(file => {
-      const fileItem: FileItem = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        size: file.size,
-        addedAt: new Date(),
-      };
-      dispatch({ type: 'ADD_FILE', payload: fileItem });
-    });
-    e.target.value = '';
+    setError(null);
+    setUploading(true);
+
+    try {
+      for (const file of selectedFiles) {
+        dispatch({ type: 'ADD_FILE', payload: file });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload files');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
   };
 
-  const handleDelete = (id: string) => {
-    dispatch({ type: 'DELETE_FILE', payload: id });
+  const handleDownload = async (file: FileItem) => {
+    if (!file.storagePath) {
+      setError('File not available for download');
+      return;
+    }
+
+    setDownloading(file.id);
+    setError(null);
+
+    try {
+      await filesService.download(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to download file');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleDelete = (file: FileItem) => {
+    dispatch({ 
+      type: 'DELETE_FILE', 
+      payload: { id: file.id, storagePath: file.storagePath } 
+    });
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -70,6 +100,11 @@ export function Files() {
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Files</h1>
         <p className="text-muted-foreground">Drag & drop files anywhere on this page</p>
+        {error && (
+          <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md text-destructive text-sm">
+            {error}
+          </div>
+        )}
       </div>
 
       {/* Drop Zone */}
@@ -87,9 +122,14 @@ export function Files() {
           {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
         </p>
         <p className="text-sm text-muted-foreground">
-          Files are stored in memory only (no actual upload)
+          Files are uploaded to cloud storage and can be downloaded by all users
         </p>
-        {/* TODO: wire up backend here for real file storage */}
+        {uploading && (
+          <div className="mt-2 flex items-center justify-center gap-2 text-primary">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm">Uploading...</span>
+          </div>
+        )}
       </label>
 
       {/* File List */}
@@ -111,12 +151,29 @@ export function Files() {
                   {formatFileSize(file.size)} • Added {file.addedAt.toLocaleTimeString()}
                 </p>
               </div>
-              <button
-                onClick={() => handleDelete(file.id)}
-                className="btn-icon text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {file.storagePath && (
+                  <button
+                    onClick={() => handleDownload(file)}
+                    disabled={downloading === file.id}
+                    className="btn-icon text-primary hover:text-primary hover:bg-primary/10 disabled:opacity-50"
+                    title="Download file"
+                  >
+                    {downloading === file.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDelete(file)}
+                  className="btn-icon text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Delete file"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

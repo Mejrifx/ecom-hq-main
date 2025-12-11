@@ -11,8 +11,42 @@ This will create all necessary tables:
 - `notes` - For storing notes
 - `tasks` - For storing tasks
 - `recipe_cards` - For storing recipe cards
-- `files` - For storing file metadata
+- `files` - For storing file metadata (includes `storage_path` column for Supabase Storage)
 - `activity` - For storing activity logs
+
+## 1.1. Create Storage Bucket
+
+For file uploads and downloads to work, you need to create a Supabase Storage bucket:
+
+1. Go to your Supabase project dashboard
+2. Navigate to **Storage** in the left sidebar
+3. Click **New bucket**
+4. Name it: `files`
+5. Make it **Public** (or set up RLS policies for authenticated users)
+6. Click **Create bucket**
+
+**Storage RLS Policies (if bucket is private):**
+If you made the bucket private, you'll need to add RLS policies. Go to Storage > Policies and add:
+
+```sql
+-- Allow authenticated users to upload files
+CREATE POLICY "Allow authenticated uploads"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'files');
+
+-- Allow authenticated users to read files
+CREATE POLICY "Allow authenticated reads"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (bucket_id = 'files');
+
+-- Allow authenticated users to delete their own files
+CREATE POLICY "Allow authenticated deletes"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'files');
+```
 
 ## 2. Environment Variables
 

@@ -47,10 +47,22 @@ CREATE TABLE IF NOT EXISTS files (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   size BIGINT NOT NULL,
+  storage_path TEXT, -- Path in Supabase Storage
   added_at TIMESTAMPTZ DEFAULT NOW(),
   user_id UUID, -- Optional: tracks who created it, but all authenticated users can see it
   CONSTRAINT files_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL
 );
+
+-- Add storage_path column if it doesn't exist (for existing databases)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'files' AND column_name = 'storage_path'
+  ) THEN
+    ALTER TABLE files ADD COLUMN storage_path TEXT;
+  END IF;
+END $$;
 
 -- Activity log table
 CREATE TABLE IF NOT EXISTS activity (

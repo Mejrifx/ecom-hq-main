@@ -43,6 +43,7 @@ const rowToFile = (row: any): FileItem => ({
   name: row.name,
   size: row.size,
   addedAt: new Date(row.added_at),
+  storagePath: row.storage_path || undefined,
 });
 
 // Helper to convert database row to ActivityItem
@@ -250,23 +251,82 @@ export const filesService = {
     return data.map(rowToFile);
   },
 
-  async create(file: Omit<FileItem, 'id' | 'addedAt'>): Promise<FileItem> {
+  async upload(file: File): Promise<FileItem> {
     const userId = await getCurrentUserId();
+    
+    // Generate unique file path
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `${userId}/${fileName}`;
+    
+    // Upload file to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('files')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (uploadError) throw uploadError;
+    
+    // Save file metadata to database
     const { data, error } = await supabase
       .from('files')
       .insert({
         name: file.name,
         size: file.size,
+        storage_path: filePath,
         user_id: userId,
       })
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      // If database insert fails, try to clean up the uploaded file
+      await supabase.storage.from('files').remove([filePath]);
+      throw error;
+    }
+    
     return rowToFile(data);
   },
 
-  async delete(id: string): Promise<void> {
+  async download(file: FileItem): Promise<void> {
+    if (!file.storagePath) {
+      throw new Error('File storage path not found');
+    }
+    
+    // Download file from Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('files')
+      .download(file.storagePath);
+    
+    if (error) throw error;
+    
+    // Create download link and trigger download
+    const url = window.URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
+  async delete(id: string, storagePath?: string): Promise<void> {
+    // Delete from storage if path exists
+    if (storagePath) {
+      const { error: storageError } = await supabase.storage
+        .from('files')
+        .remove([storagePath]);
+      
+      if (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        // Continue with database deletion even if storage deletion fails
+      }
+    }
+    
+    // Delete from database
     const { error } = await supabase
       .from('files')
       .delete()
