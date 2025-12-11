@@ -1,11 +1,13 @@
 import React, { useState, useCallback } from 'react';
 import { Upload, File, Trash2, HardDrive, Download, Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useData } from '../contexts/FakeDataContext';
 import { FileItem } from '../types';
 import { filesService } from '../lib/supabase-service';
 
 export function Files() {
   const { state, dispatch } = useData();
+  const queryClient = useQueryClient();
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloading, setDownloading] = useState<string | null>(null);
@@ -30,14 +32,17 @@ export function Files() {
     const droppedFiles = Array.from(e.dataTransfer.files);
     try {
       for (const file of droppedFiles) {
-        dispatch({ type: 'ADD_FILE', payload: file });
+        await filesService.upload(file);
       }
+      // Refresh the file list
+      await queryClient.invalidateQueries({ queryKey: ['files'] });
     } catch (err) {
+      console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Failed to upload files');
     } finally {
       setUploading(false);
     }
-  }, [dispatch]);
+  }, [queryClient]);
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -46,9 +51,12 @@ export function Files() {
 
     try {
       for (const file of selectedFiles) {
-        dispatch({ type: 'ADD_FILE', payload: file });
+        await filesService.upload(file);
       }
+      // Refresh the file list
+      await queryClient.invalidateQueries({ queryKey: ['files'] });
     } catch (err) {
+      console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Failed to upload files');
     } finally {
       setUploading(false);
