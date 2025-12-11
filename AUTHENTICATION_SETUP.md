@@ -107,3 +107,4 @@ Once both users are set up:
 3. You can collaborate on notes, tasks, and recipes in real-time
 4. Use the Settings page to see your account info and sign out
 
+

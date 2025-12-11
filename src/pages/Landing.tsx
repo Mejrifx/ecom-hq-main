@@ -55,7 +55,7 @@ export function Landing() {
               Ecom HQ
             </h1>
             <p className="text-muted-foreground">
-              Your shared workspace for e-commerce journey
+              Our shared workspace for the e-commerce journey
             </p>
           </div>
 
