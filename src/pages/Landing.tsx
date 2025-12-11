@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, FileText, CheckSquare, UtensilsCrossed, Mail, Lock, AlertCircle } from 'lucide-react';
+import { ArrowRight, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -44,11 +44,15 @@ export function Landing() {
         <div className="max-w-md w-full mx-auto animate-fade-in">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary mb-6">
-              <Sparkles className="w-10 h-10 text-primary-foreground" />
+            <div className="inline-flex items-center justify-center mb-6">
+              <img 
+                src="/HandyCardsLogo.svg" 
+                alt="Ecom HQ Logo" 
+                className="h-20 w-auto"
+              />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-3 tracking-tight">
-              Startup HQ
+              Ecom HQ
             </h1>
             <p className="text-muted-foreground">
               Your shared workspace for e-commerce journey
@@ -118,50 +122,13 @@ export function Landing() {
               </Button>
             </form>
           </div>
-
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FeatureCard
-              icon={FileText}
-              title="Notes"
-              description="Shared notes and ideas"
-            />
-            <FeatureCard
-              icon={CheckSquare}
-              title="Tasks"
-              description="Track your progress"
-            />
-            <FeatureCard
-              icon={UtensilsCrossed}
-              title="Recipes"
-              description="Meal planning made easy"
-            />
-          </div>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p>Secure shared workspace • Built with React + Supabase</p>
+        <p>Built By Mej 4 Da Boys</p>
       </footer>
-    </div>
-  );
-}
-
-interface FeatureCardProps {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}
-
-function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
-  return (
-    <div className="card-elevated p-4 text-center">
-      <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary mb-3">
-        <Icon className="w-5 h-5" />
-      </div>
-      <h3 className="font-semibold text-foreground mb-1 text-sm">{title}</h3>
-      <p className="text-xs text-muted-foreground">{description}</p>
     </div>
   );
 }

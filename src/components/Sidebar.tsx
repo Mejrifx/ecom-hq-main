@@ -10,7 +10,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -37,11 +36,13 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     >
       {/* Logo */}
       <div className={`flex items-center gap-3 px-4 h-16 border-b border-sidebar-border ${isCollapsed ? 'justify-center' : ''}`}>
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-          <Sparkles className="w-5 h-5 text-primary-foreground" />
-        </div>
+        <img 
+          src="/HandyCardsLogo.svg" 
+          alt="Ecom HQ Logo" 
+          className={`flex-shrink-0 ${isCollapsed ? 'w-8 h-8' : 'w-8 h-8'}`}
+        />
         {!isCollapsed && (
-          <span className="font-semibold text-lg text-foreground">Startup HQ</span>
+          <span className="font-semibold text-lg text-foreground">Ecom HQ</span>
         )}
       </div>
 

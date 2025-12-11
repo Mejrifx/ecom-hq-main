@@ -1,4 +1,4 @@
--- Supabase Database Schema for Startup HQ
+-- Supabase Database Schema for Ecom HQ
 -- Shared workspace for authenticated users
 -- This script is idempotent - safe to run multiple times
 -- Run this SQL in your Supabase SQL Editor

@@ -1,5 +1,4 @@
-// Types for Startup HQ
-// TODO: wire up backend here for persistence
+// Types for Ecom HQ
 
 export interface Note {
   id: string;

@@ -1,6 +1,6 @@
-# Startup HQ
+# Ecom HQ
 
-A clean, minimal React + TypeScript workspace app with notes, tasks, and recipe cards.
+A clean, minimal React + TypeScript workspace app for e-commerce collaboration with notes, tasks, and recipe cards.
 
 ## Tech Stack
 
