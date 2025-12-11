@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
-import { Moon, Sun, User, Mail, Save } from 'lucide-react';
+import React from 'react';
+import { Moon, Sun, User, Mail, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-import { Toast, useToastState } from '../components/Toast';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from '../components/ui/button';
 
 export function Settings() {
   const { theme, toggleTheme } = useTheme();
-  const [name, setName] = useState('Jane Doe');
-  const [email, setEmail] = useState('jane@startup-hq.com');
-  const { toast, showToast, hideToast } = useToastState();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSave = () => {
-    // TODO: wire up backend here for real persistence
-    showToast('Saved (not really)');
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
   };
 
   return (
@@ -55,19 +56,19 @@ export function Settings() {
       </section>
 
       {/* Account Settings */}
-      <section className="card-elevated p-6">
+      <section className="card-elevated p-6 mb-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Account</h2>
         <div className="space-y-4">
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
               <User className="w-4 h-4" />
-              Name
+              User ID
             </label>
             <input
               type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="input-base"
+              value={user?.id || ''}
+              readOnly
+              className="input-base bg-muted"
             />
           </div>
           <div>
@@ -77,24 +78,26 @@ export function Settings() {
             </label>
             <input
               type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="input-base"
+              value={user?.email || ''}
+              readOnly
+              className="input-base bg-muted"
             />
           </div>
-          <button onClick={handleSave} className="btn-primary">
-            <Save className="w-4 h-4" />
-            Save Changes
-          </button>
         </div>
       </section>
 
-      {/* Toast */}
-      <Toast
-        message={toast.message}
-        isVisible={toast.isVisible}
-        onClose={hideToast}
-      />
+      {/* Sign Out */}
+      <section className="card-elevated p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">Actions</h2>
+        <Button
+          onClick={handleSignOut}
+          variant="destructive"
+          className="w-full"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign Out
+        </Button>
+      </section>
     </div>
   );
 }

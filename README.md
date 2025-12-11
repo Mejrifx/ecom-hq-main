@@ -7,6 +7,8 @@ A clean, minimal React + TypeScript workspace app with notes, tasks, and recipe 
 - **React 18** + **Vite 5** + **TypeScript**
 - **Tailwind CSS** for styling
 - **React Router v6** for routing
+- **Supabase** for backend and database
+- **React Query** for data fetching and caching
 - **Context + useReducer** for state management
 - **@dnd-kit** for drag-and-drop kanban board
 
@@ -15,16 +17,24 @@ A clean, minimal React + TypeScript workspace app with notes, tasks, and recipe 
 - 📝 **Notes** - Markdown editor with live preview
 - ✅ **Tasks** - Kanban board with drag-and-drop
 - 🍳 **Recipe Cards** - Gallery with live card builder
-- 📁 **Files** - Drag-drop file list (in-memory only)
+- 📁 **Files** - Drag-drop file list
 - ⚙️ **Settings** - Dark/light mode toggle
 
-**Note:** All data is stored in memory and resets on page refresh. No backend calls.
+**Note:** All data is now persisted to Supabase database. See `SUPABASE_SETUP.md` for database setup instructions.
 
 ## Getting Started
 
 ```bash
 # Install dependencies
 npm install
+
+# Set up Supabase database (see SUPABASE_SETUP.md)
+# 1. Run the SQL schema in your Supabase SQL Editor
+# 2. Verify .env file has your Supabase credentials
+
+# Set up authentication (see AUTHENTICATION_SETUP.md)
+# 1. Create user accounts in Supabase dashboard
+# 2. Share credentials securely with your friend
 
 # Start development server
 npm run dev
@@ -35,6 +45,12 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+**Important:** Before running the app, make sure to:
+1. Run the database schema from `supabase-schema.sql` in your Supabase SQL Editor
+2. Verify your `.env` file contains your Supabase URL and anon key
+3. Create user accounts (see `AUTHENTICATION_SETUP.md`)
+4. The app now requires login - you'll see a login page instead of "Enter" button
 
 ## Project Structure
 
@@ -80,8 +96,8 @@ src/
 
 ## TODO
 
-- [ ] Wire up backend for data persistence
-- [ ] Add real authentication
+- [x] Wire up backend for data persistence (Supabase)
+- [x] Add real authentication (Supabase Auth)
 - [ ] Implement whiteboard canvas
 - [ ] Add PDF export for recipe cards
 - [ ] Add real-time collaboration
