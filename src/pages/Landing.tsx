@@ -44,7 +44,7 @@ export function Landing() {
         <div className="max-w-md w-full mx-auto animate-fade-in">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center mb-2">
+            <div className="inline-flex items-center justify-center mb-1">
               <img 
                 src="/HandyCardsLogo.svg" 
                 alt="Ecom HQ Logo" 
@@ -56,7 +56,7 @@ export function Landing() {
                 }}
               />
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-1 tracking-tight" style={{ visibility: 'hidden' }}>
+            <h1 className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight" style={{ display: 'none' }}>
               Ecom HQ
             </h1>
             <p 
