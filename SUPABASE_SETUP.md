@@ -99,3 +99,18 @@ If you encounter connection issues:
 4. Verify RLS policies allow authenticated users (see schema)
 5. Make sure you've created user accounts (see `AUTHENTICATION_SETUP.md`)
 
+### File Upload RLS Error
+
+If you get "new row violates row-level security policy" when uploading files:
+
+1. Go to Supabase Dashboard → SQL Editor
+2. Run the SQL from `fix-files-rls.sql` to fix the RLS policies
+3. Or manually run this SQL:
+
+```sql
+DROP POLICY IF EXISTS "Authenticated users can insert files" ON files;
+CREATE POLICY "Authenticated users can insert files" ON files
+  FOR INSERT 
+  WITH CHECK (auth.role() = 'authenticated');
+```
+
