@@ -35,11 +35,11 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center justify-center px-4 h-16 border-b border-sidebar-border">
+      <div className="flex items-center justify-center px-4 h-24 border-b border-sidebar-border">
         <img 
           src="/HandyCardsLogo.svg" 
           alt="Ecom HQ Logo" 
-          className="flex-shrink-0 w-20 h-20 object-contain"
+          className="flex-shrink-0 w-40 h-40 object-contain"
         />
       </div>
 
