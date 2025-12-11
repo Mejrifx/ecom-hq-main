@@ -39,7 +39,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <img 
           src="/HandyCardsLogo.svg" 
           alt="Ecom HQ Logo" 
-          className="flex-shrink-0 w-12 h-12"
+          className="flex-shrink-0 w-20 h-20 object-contain"
         />
       </div>
 
