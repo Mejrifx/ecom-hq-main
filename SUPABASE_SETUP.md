@@ -122,3 +122,9 @@ If you encounter connection issues:
 2. Run the SQL from `fix-storage-rls.sql` to fix the Storage RLS policies
 3. Or make your bucket public (see Storage RLS Policies section above)
 
+**Missing Column Error:** If you get "Could not find the 'storage_path' column":
+
+1. Go to Supabase Dashboard → SQL Editor
+2. Run the SQL from `add-storage-path-column.sql` to add the missing column
+3. This happens if you ran the schema before the storage_path column was added
+
