@@ -43,16 +43,13 @@ export function Landing() {
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-20">
         <div className="max-w-md w-full mx-auto animate-fade-in">
           {/* Logo */}
-          <div className="text-center mb-8 relative">
-            <div className="inline-flex items-center justify-center mb-6">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center mb-4">
               <img 
                 src="/HandyCardsLogo.svg" 
                 alt="Ecom HQ Logo" 
                 className="h-20 w-auto"
                 style={{ 
-                  position: 'absolute',
-                  left: '185px',
-                  top: '136px',
                   borderWidth: '1px',
                   borderColor: 'rgba(0, 0, 0, 0.1)',
                   backgroundColor: 'rgba(255, 255, 255, 0)'
