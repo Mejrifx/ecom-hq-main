@@ -80,10 +80,9 @@ export function Whiteboard() {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    setCursorPos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setCursorPos({ x, y });
   };
 
   const hideCursorPreview = () => {
@@ -333,7 +332,9 @@ export function Whiteboard() {
           onMouseDown={startDrawing}
           onMouseMove={(e) => {
             draw(e);
-            updateCursorPreview(e);
+            if (!isDrawing) {
+              updateCursorPreview(e);
+            }
           }}
           onMouseUp={stopDrawing}
           onMouseLeave={(e) => {
@@ -352,13 +353,15 @@ export function Whiteboard() {
             ref={cursorPreviewRef}
             className="absolute pointer-events-none border-2 rounded-full"
             style={{
-              left: cursorPos.x - brushSize / 2,
-              top: cursorPos.y - brushSize / 2,
+              left: cursorPos.x,
+              top: cursorPos.y,
               width: brushSize,
               height: brushSize,
+              marginLeft: -brushSize / 2,
+              marginTop: -brushSize / 2,
               borderColor: tool === 'pen' ? color : '#ffffff',
               backgroundColor: tool === 'pen' ? `${color}40` : 'transparent',
-              transform: 'translate(-50%, -50%)',
+              boxShadow: tool === 'pen' ? `0 0 0 1px ${color}20` : '0 0 0 1px rgba(255,255,255,0.3)',
             }}
           />
         )}
