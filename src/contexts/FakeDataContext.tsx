@@ -181,6 +181,48 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
+  const createCardProductMutation = useMutation({
+    mutationFn: cardProductsService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cardProducts'] });
+    },
+  });
+
+  const updateCardProductMutation = useMutation({
+    mutationFn: cardProductsService.update,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cardProducts'] });
+    },
+  });
+
+  const deleteCardProductMutation = useMutation({
+    mutationFn: cardProductsService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cardProducts', 'cards'] });
+    },
+  });
+
+  const createCardMutation = useMutation({
+    mutationFn: cardsService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+    },
+  });
+
+  const updateCardMutation = useMutation({
+    mutationFn: cardsService.update,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+    },
+  });
+
+  const deleteCardMutation = useMutation({
+    mutationFn: cardsService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+    },
+  });
+
   const createActivityMutation = useMutation({
     mutationFn: activityService.create,
     onSuccess: () => {
