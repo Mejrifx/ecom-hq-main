@@ -541,11 +541,11 @@ export function Notes() {
                           const before = localContent.substring(0, lineStart);
                           const after = localContent.substring(lineStart);
                           
-                          // Insert a 3-column table template
-                          const tableTemplate = `| Column 1 | Column 2 | Column 3 |
-|----------|----------|----------|
-| Row 1    |          |          |
-| Row 2    |          |          |
+                          // Insert a cleaner 3-column table template
+                          const tableTemplate = `| Header 1 | Header 2 | Header 3 |
+| --- | --- | --- |
+| Cell 1 | Cell 2 | Cell 3 |
+| Cell 4 | Cell 5 | Cell 6 |
 `;
                           const newContent = before + (lineStart === 0 ? '' : '\n') + tableTemplate + after;
                           setLocalContent(newContent);
@@ -553,7 +553,7 @@ export function Notes() {
                           setTimeout(() => {
                             if (textareaRef.current) {
                               // Position cursor in first cell of first data row
-                              const cursorPos = lineStart + (lineStart === 0 ? 0 : 1) + tableTemplate.indexOf('Row 1') + 6;
+                              const cursorPos = lineStart + (lineStart === 0 ? 0 : 1) + tableTemplate.indexOf('Cell 1') + 6;
                               textareaRef.current.focus();
                               textareaRef.current.setSelectionRange(cursorPos, cursorPos);
                             }
@@ -563,6 +563,101 @@ export function Notes() {
                         title="Insert Table"
                       >
                         <Table className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const textarea = textareaRef.current;
+                          if (!textarea) return;
+                          const start = textarea.selectionStart;
+                          const content = localContent;
+                          
+                          // Find the current line
+                          const lineStart = content.lastIndexOf('\n', start - 1) + 1;
+                          const lineEnd = content.indexOf('\n', start);
+                          const currentLine = content.substring(lineStart, lineEnd === -1 ? content.length : lineEnd);
+                          
+                          // Check if we're in a table row (starts with |)
+                          if (currentLine.trim().startsWith('|') && !currentLine.includes('---')) {
+                            // We're in a table row, add a new row below
+                            const before = content.substring(0, lineEnd === -1 ? content.length : lineEnd);
+                            const after = content.substring(lineEnd === -1 ? content.length : lineEnd);
+                            
+                            // Count columns in current row
+                            const columns = currentLine.split('|').filter(c => c.trim() !== '').length;
+                            const newRow = '|' + ' Cell |'.repeat(columns);
+                            
+                            const newContent = before + '\n' + newRow + (after ? '\n' + after : '');
+                            setLocalContent(newContent);
+                            syncContentToNote(newContent);
+                            
+                            setTimeout(() => {
+                              if (textareaRef.current) {
+                                const newCursorPos = before.length + 1 + newRow.indexOf('Cell') + 5;
+                                textareaRef.current.focus();
+                                textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                              }
+                            }, 0);
+                          }
+                        }}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors text-xs"
+                        title="Add Row (when cursor is in a table)"
+                      >
+                        + Row
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const textarea = textareaRef.current;
+                          if (!textarea) return;
+                          const start = textarea.selectionStart;
+                          const content = localContent;
+                          
+                          // Find all table rows
+                          const lines = content.split('\n');
+                          let tableStart = -1;
+                          let tableEnd = -1;
+                          
+                          // Find the table we're in
+                          for (let i = 0; i < lines.length; i++) {
+                            const line = lines[i];
+                            if (line.trim().startsWith('|') && !line.includes('---')) {
+                              if (tableStart === -1) tableStart = i;
+                              tableEnd = i;
+                            } else if (tableStart !== -1 && !line.trim().startsWith('|')) {
+                              break;
+                            }
+                          }
+                          
+                          if (tableStart !== -1 && tableEnd !== -1) {
+                            // Add a column to all rows
+                            const newLines = lines.map((line, index) => {
+                              if (index >= tableStart && index <= tableEnd && line.trim().startsWith('|')) {
+                                if (line.includes('---')) {
+                                  return line + ' --- |';
+                                }
+                                return line + ' Cell |';
+                              }
+                              return line;
+                            });
+                            
+                            const newContent = newLines.join('\n');
+                            setLocalContent(newContent);
+                            syncContentToNote(newContent);
+                            
+                            setTimeout(() => {
+                              if (textareaRef.current) {
+                                textareaRef.current.focus();
+                                // Keep cursor in same position
+                                textareaRef.current.setSelectionRange(start, start);
+                              }
+                            }, 0);
+                          }
+                        }}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors text-xs"
+                        title="Add Column (when cursor is in a table)"
+                      >
+                        + Col
                       </button>
                     </div>
                     </div>
