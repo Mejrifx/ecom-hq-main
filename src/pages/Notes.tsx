@@ -49,7 +49,7 @@ export function Notes() {
     setCreateModalOpen(false);
   };
 
-  const handleUpdateNote = (updates: Partial<Note>) => {
+  const handleUpdateNote = (updates: Partial<Note>, preserveCursor: boolean = false) => {
     if (!selectedNote) return;
     const updatedNote: Note = {
       ...selectedNote,
@@ -57,6 +57,17 @@ export function Notes() {
       updatedAt: new Date(),
     };
     dispatch({ type: 'UPDATE_NOTE', payload: updatedNote });
+    
+    // Preserve cursor position if needed
+    if (preserveCursor && textareaRef.current) {
+      const cursorPos = textareaRef.current.selectionStart;
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(cursorPos, cursorPos);
+        }
+      }, 0);
+    }
     
     // Fake save indicator
     setSaveIndicator(true);
@@ -371,7 +382,18 @@ export function Notes() {
                   <textarea
                     ref={textareaRef}
                     value={selectedNote.content}
-                    onChange={e => handleUpdateNote({ content: e.target.value })}
+                    onChange={e => {
+                      // Preserve cursor position when typing
+                      const cursorPos = e.target.selectionStart;
+                      handleUpdateNote({ content: e.target.value }, true);
+                      // Restore cursor position after state update
+                      setTimeout(() => {
+                        if (textareaRef.current) {
+                          const newCursorPos = Math.min(cursorPos, e.target.value.length);
+                          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                        }
+                      }, 0);
+                    }}
                     placeholder="Start writing... (supports markdown)"
                     className="input-base min-h-[200px] resize-y font-mono text-sm"
                   />
