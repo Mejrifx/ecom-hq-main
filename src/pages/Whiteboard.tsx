@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Brush, Eraser, Download, Trash2, Undo, Redo, Minus, Plus } from 'lucide-react';
+import { Brush, Eraser, Download, Trash2, Undo, Redo } from 'lucide-react';
+import { Slider } from '../components/ui/slider';
 
 type Tool = 'pen' | 'eraser';
 
@@ -11,6 +12,8 @@ export function Whiteboard() {
   const [brushSize, setBrushSize] = useState(5);
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyStep, setHistoryStep] = useState(-1);
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
+  const cursorPreviewRef = useRef<HTMLDivElement>(null);
 
   // Initialize canvas
   useEffect(() => {
@@ -69,6 +72,22 @@ export function Whiteboard() {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
     };
+  };
+
+  // Update cursor preview position
+  const updateCursorPreview = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    setCursorPos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  const hideCursorPreview = () => {
+    setCursorPos(null);
   };
 
   // Start drawing
@@ -257,23 +276,17 @@ export function Whiteboard() {
         <div className="w-px h-8 bg-border" />
 
         {/* Brush Size */}
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-muted-foreground">Size:</label>
-          <button
-            onClick={() => setBrushSize(Math.max(1, brushSize - 2))}
-            className="p-1 rounded hover:bg-muted"
-            title="Decrease brush size"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <span className="text-sm font-medium w-8 text-center">{brushSize}px</span>
-          <button
-            onClick={() => setBrushSize(Math.min(50, brushSize + 2))}
-            className="p-1 rounded hover:bg-muted"
-            title="Increase brush size"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-3 min-w-[200px]">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">Size:</label>
+          <Slider
+            value={[brushSize]}
+            onValueChange={(value) => setBrushSize(value[0])}
+            min={1}
+            max={50}
+            step={1}
+            className="flex-1"
+          />
+          <span className="text-sm font-medium w-12 text-right">{brushSize}px</span>
         </div>
 
         <div className="flex-1" />
@@ -318,15 +331,37 @@ export function Whiteboard() {
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
-          onMouseMove={draw}
+          onMouseMove={(e) => {
+            draw(e);
+            updateCursorPreview(e);
+          }}
           onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
+          onMouseLeave={(e) => {
+            stopDrawing();
+            hideCursorPreview();
+          }}
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
           className="absolute inset-0 cursor-crosshair touch-none"
           style={{ backgroundColor: '#ffffff' }}
         />
+        {/* Cursor Preview */}
+        {cursorPos && !isDrawing && (
+          <div
+            ref={cursorPreviewRef}
+            className="absolute pointer-events-none border-2 rounded-full"
+            style={{
+              left: cursorPos.x - brushSize / 2,
+              top: cursorPos.y - brushSize / 2,
+              width: brushSize,
+              height: brushSize,
+              borderColor: tool === 'pen' ? color : '#ffffff',
+              backgroundColor: tool === 'pen' ? `${color}40` : 'transparent',
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        )}
       </div>
     </div>
   );
