@@ -14,7 +14,8 @@ export function Notes() {
   const [saveIndicator, setSaveIndicator] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const cursorPositionRef = useRef<number | null>(null);
+  const [localContent, setLocalContent] = useState('');
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Filter notes by search
   const filteredNotes = useMemo(() => {
@@ -28,6 +29,13 @@ export function Notes() {
   const selectedNote = useMemo(() => {
     return state.notes.find(n => n.id === selectedNoteId) || null;
   }, [state.notes, selectedNoteId]);
+
+  // Sync local content with selected note
+  useEffect(() => {
+    if (selectedNote) {
+      setLocalContent(selectedNote.content);
+    }
+  }, [selectedNote?.id, selectedNote?.content]);
 
   // Auto-select first note on mount
   useEffect(() => {
@@ -50,7 +58,7 @@ export function Notes() {
     setCreateModalOpen(false);
   };
 
-  const handleUpdateNote = (updates: Partial<Note>, cursorPos?: number) => {
+  const handleUpdateNote = (updates: Partial<Note>) => {
     if (!selectedNote) return;
     const updatedNote: Note = {
       ...selectedNote,
@@ -59,30 +67,20 @@ export function Notes() {
     };
     dispatch({ type: 'UPDATE_NOTE', payload: updatedNote });
     
-    // Restore cursor position if provided
-    if (cursorPos !== undefined) {
-      cursorPositionRef.current = cursorPos;
-    }
-    
     // Fake save indicator
     setSaveIndicator(true);
     setTimeout(() => setSaveIndicator(false), 1500);
   };
 
-  // Restore cursor position after content updates
-  useEffect(() => {
-    if (cursorPositionRef.current !== null && textareaRef.current) {
-      const pos = cursorPositionRef.current;
-      // Use requestAnimationFrame to ensure DOM is updated
-      requestAnimationFrame(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          textareaRef.current.setSelectionRange(pos, pos);
-          cursorPositionRef.current = null;
-        }
-      });
+  // Debounced update to sync local content to note
+  const syncContentToNote = (content: string) => {
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
     }
-  }, [selectedNote?.content]);
+    updateTimeoutRef.current = setTimeout(() => {
+      handleUpdateNote({ content });
+    }, 300);
+  };
 
   const handleDeleteNote = () => {
     if (!selectedNote) return;
@@ -99,9 +97,9 @@ export function Notes() {
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    const textBefore = textarea.value.substring(0, start);
-    const textAfter = textarea.value.substring(end);
+    const selectedText = localContent.substring(start, end);
+    const textBefore = localContent.substring(0, start);
+    const textAfter = localContent.substring(end);
 
     let newText: string;
     let newCursorPos: number;
@@ -116,7 +114,8 @@ export function Notes() {
       newCursorPos = start + before.length + placeholder.length + after.length;
     }
 
-    handleUpdateNote({ content: newText });
+    setLocalContent(newText);
+    syncContentToNote(newText);
     
     // Restore cursor position after state update
     setTimeout(() => {
@@ -304,10 +303,12 @@ export function Notes() {
                           const textarea = textareaRef.current;
                           if (!textarea) return;
                           const start = textarea.selectionStart;
-                          const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
-                          const before = textarea.value.substring(0, lineStart);
-                          const after = textarea.value.substring(lineStart);
-                          handleUpdateNote({ content: before + '# ' + after });
+                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                          const before = localContent.substring(0, lineStart);
+                          const after = localContent.substring(lineStart);
+                          const newContent = before + '# ' + after;
+                          setLocalContent(newContent);
+                          syncContentToNote(newContent);
                           setTimeout(() => {
                             if (textareaRef.current) {
                               textareaRef.current.focus();
@@ -326,10 +327,12 @@ export function Notes() {
                           const textarea = textareaRef.current;
                           if (!textarea) return;
                           const start = textarea.selectionStart;
-                          const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
-                          const before = textarea.value.substring(0, lineStart);
-                          const after = textarea.value.substring(lineStart);
-                          handleUpdateNote({ content: before + '## ' + after });
+                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                          const before = localContent.substring(0, lineStart);
+                          const after = localContent.substring(lineStart);
+                          const newContent = before + '## ' + after;
+                          setLocalContent(newContent);
+                          syncContentToNote(newContent);
                           setTimeout(() => {
                             if (textareaRef.current) {
                               textareaRef.current.focus();
@@ -348,10 +351,12 @@ export function Notes() {
                           const textarea = textareaRef.current;
                           if (!textarea) return;
                           const start = textarea.selectionStart;
-                          const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
-                          const before = textarea.value.substring(0, lineStart);
-                          const after = textarea.value.substring(lineStart);
-                          handleUpdateNote({ content: before + '### ' + after });
+                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                          const before = localContent.substring(0, lineStart);
+                          const after = localContent.substring(lineStart);
+                          const newContent = before + '### ' + after;
+                          setLocalContent(newContent);
+                          syncContentToNote(newContent);
                           setTimeout(() => {
                             if (textareaRef.current) {
                               textareaRef.current.focus();
@@ -371,10 +376,12 @@ export function Notes() {
                           const textarea = textareaRef.current;
                           if (!textarea) return;
                           const start = textarea.selectionStart;
-                          const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
-                          const before = textarea.value.substring(0, lineStart);
-                          const after = textarea.value.substring(lineStart);
-                          handleUpdateNote({ content: before + '- ' + after });
+                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                          const before = localContent.substring(0, lineStart);
+                          const after = localContent.substring(lineStart);
+                          const newContent = before + '- ' + after;
+                          setLocalContent(newContent);
+                          syncContentToNote(newContent);
                           setTimeout(() => {
                             if (textareaRef.current) {
                               textareaRef.current.focus();
@@ -391,14 +398,11 @@ export function Notes() {
                   </div>
                   <textarea
                     ref={textareaRef}
-                    value={selectedNote.content}
+                    value={localContent}
                     onChange={e => {
-                      const textarea = e.target;
-                      const newValue = textarea.value;
-                      const cursorPos = textarea.selectionStart;
-                      
-                      // Update content and preserve cursor position
-                      handleUpdateNote({ content: newValue }, cursorPos);
+                      const newValue = e.target.value;
+                      setLocalContent(newValue);
+                      syncContentToNote(newValue);
                     }}
                     placeholder="Start writing... (supports markdown)"
                     className="input-base min-h-[200px] resize-y font-mono text-sm"
@@ -406,14 +410,14 @@ export function Notes() {
                 </div>
 
                 {/* Preview */}
-                {selectedNote.content && (
+                {localContent && (
                   <div>
                     <label className="block text-sm font-medium text-muted-foreground mb-2">
                       Preview
                     </label>
                     <div
                       className="prose prose-sm max-w-none p-4 rounded-lg bg-muted/50 text-foreground"
-                      dangerouslySetInnerHTML={{ __html: renderMarkdown(selectedNote.content) }}
+                      dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent) }}
                     />
                   </div>
                 )}
