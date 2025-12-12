@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Trash2, FileText, Check, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Plus, Search, Trash2, FileText, Check, HelpCircle, Bold, Italic, Heading1, Heading2, Heading3, List } from 'lucide-react';
 import { useData } from '../contexts/FakeDataContext';
 import { Note } from '../types';
 import { Modal } from '../components/Modal';
@@ -13,6 +13,7 @@ export function Notes() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [saveIndicator, setSaveIndicator] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Filter notes by search
   const filteredNotes = useMemo(() => {
@@ -68,6 +69,41 @@ export function Notes() {
     addActivity('deleted', 'note', selectedNote.title);
     setSelectedNoteId(null);
     setDeleteModalOpen(false);
+  };
+
+  // Insert markdown formatting at cursor position or wrap selected text
+  const insertMarkdown = (before: string, after: string = '', placeholder: string = 'text') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const textBefore = textarea.value.substring(0, start);
+    const textAfter = textarea.value.substring(end);
+
+    let newText: string;
+    let newCursorPos: number;
+
+    if (selectedText) {
+      // Wrap selected text
+      newText = textBefore + before + selectedText + after + textAfter;
+      newCursorPos = start + before.length + selectedText.length + after.length;
+    } else {
+      // Insert with placeholder
+      newText = textBefore + before + placeholder + after + textAfter;
+      newCursorPos = start + before.length + placeholder.length + after.length;
+    }
+
+    handleUpdateNote({ content: newText });
+    
+    // Restore cursor position after state update
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
   };
 
   // Simple markdown to HTML (basic)
@@ -218,10 +254,122 @@ export function Notes() {
               <div className="max-w-3xl mx-auto space-y-6">
                 {/* Editor */}
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">
-                    Content (Markdown)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-muted-foreground">
+                      Content (Markdown)
+                    </label>
+                    {/* Formatting Toolbar */}
+                    <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-md">
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('**', '**', 'bold text')}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                        title="Bold"
+                      >
+                        <Bold className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('*', '*', 'italic text')}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                        title="Italic"
+                      >
+                        <Italic className="w-4 h-4" />
+                      </button>
+                      <div className="w-px h-4 bg-border mx-0.5" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const textarea = textareaRef.current;
+                          if (!textarea) return;
+                          const start = textarea.selectionStart;
+                          const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
+                          const before = textarea.value.substring(0, lineStart);
+                          const after = textarea.value.substring(lineStart);
+                          handleUpdateNote({ content: before + '# ' + after });
+                          setTimeout(() => {
+                            if (textareaRef.current) {
+                              textareaRef.current.focus();
+                              textareaRef.current.setSelectionRange(lineStart + 2, lineStart + 2);
+                            }
+                          }, 0);
+                        }}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                        title="Heading 1"
+                      >
+                        <Heading1 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const textarea = textareaRef.current;
+                          if (!textarea) return;
+                          const start = textarea.selectionStart;
+                          const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
+                          const before = textarea.value.substring(0, lineStart);
+                          const after = textarea.value.substring(lineStart);
+                          handleUpdateNote({ content: before + '## ' + after });
+                          setTimeout(() => {
+                            if (textareaRef.current) {
+                              textareaRef.current.focus();
+                              textareaRef.current.setSelectionRange(lineStart + 3, lineStart + 3);
+                            }
+                          }, 0);
+                        }}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                        title="Heading 2"
+                      >
+                        <Heading2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const textarea = textareaRef.current;
+                          if (!textarea) return;
+                          const start = textarea.selectionStart;
+                          const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
+                          const before = textarea.value.substring(0, lineStart);
+                          const after = textarea.value.substring(lineStart);
+                          handleUpdateNote({ content: before + '### ' + after });
+                          setTimeout(() => {
+                            if (textareaRef.current) {
+                              textareaRef.current.focus();
+                              textareaRef.current.setSelectionRange(lineStart + 4, lineStart + 4);
+                            }
+                          }, 0);
+                        }}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                        title="Heading 3"
+                      >
+                        <Heading3 className="w-4 h-4" />
+                      </button>
+                      <div className="w-px h-4 bg-border mx-0.5" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const textarea = textareaRef.current;
+                          if (!textarea) return;
+                          const start = textarea.selectionStart;
+                          const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
+                          const before = textarea.value.substring(0, lineStart);
+                          const after = textarea.value.substring(lineStart);
+                          handleUpdateNote({ content: before + '- ' + after });
+                          setTimeout(() => {
+                            if (textareaRef.current) {
+                              textareaRef.current.focus();
+                              textareaRef.current.setSelectionRange(lineStart + 2, lineStart + 2);
+                            }
+                          }, 0);
+                        }}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                        title="Bullet List"
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                   <textarea
+                    ref={textareaRef}
                     value={selectedNote.content}
                     onChange={e => handleUpdateNote({ content: e.target.value })}
                     placeholder="Start writing... (supports markdown)"
