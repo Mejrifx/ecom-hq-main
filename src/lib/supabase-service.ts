@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Note, Task, RecipeCard, FileItem, ActivityItem } from '../types';
+import { Note, Task, RecipeCard, FileItem, ActivityItem, CardProduct, Card } from '../types';
 
 // Helper to get current user ID
 const getCurrentUserId = async (): Promise<string | null> => {
@@ -44,6 +44,27 @@ const rowToFile = (row: any): FileItem => ({
   size: row.size,
   addedAt: new Date(row.added_at),
   storagePath: row.storage_path || undefined,
+});
+
+// Helper to convert database row to CardProduct
+const rowToCardProduct = (row: any): CardProduct => ({
+  id: row.id,
+  name: row.name,
+  description: row.description || undefined,
+  createdAt: new Date(row.created_at),
+  updatedAt: new Date(row.updated_at),
+});
+
+// Helper to convert database row to Card
+const rowToCard = (row: any): Card => ({
+  id: row.id,
+  productId: row.product_id,
+  title: row.title,
+  imageUrl: row.image_url || null,
+  ingredients: row.ingredients,
+  instructions: row.instructions,
+  createdAt: new Date(row.created_at),
+  updatedAt: new Date(row.updated_at),
 });
 
 // Helper to convert database row to ActivityItem

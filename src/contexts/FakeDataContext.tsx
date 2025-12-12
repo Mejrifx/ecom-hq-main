@@ -7,6 +7,8 @@ import {
   recipesService,
   filesService,
   activityService,
+  cardProductsService,
+  cardsService,
 } from '../lib/supabase-service';
 
 interface State {
@@ -80,19 +82,25 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     queryFn: filesService.getAll,
   });
 
+  const { data: cardProducts = [], isLoading: cardProductsLoading } = useQuery({
+    queryKey: ['cardProducts'],
+    queryFn: cardProductsService.getAll,
+  });
+
+  const { data: cards = [], isLoading: cardsLoading } = useQuery({
+    queryKey: ['cards'],
+    queryFn: cardsService.getAll,
+  });
+
   // Tables - using local state for now (can be connected to backend later)
   const [tables, setTables] = useState<TableData[]>([]);
-  
-  // Card Products and Cards - using local state for now
-  const [cardProducts, setCardProducts] = useState<CardProduct[]>([]);
-  const [cards, setCards] = useState<Card[]>([]);
 
   const { data: activity = [], isLoading: activityLoading } = useQuery({
     queryKey: ['activity'],
     queryFn: activityService.getAll,
   });
 
-  const isLoading = notesLoading || tasksLoading || recipesLoading || filesLoading || activityLoading;
+  const isLoading = notesLoading || tasksLoading || recipesLoading || filesLoading || cardProductsLoading || cardsLoading || activityLoading;
 
   // Mutations
   const createNoteMutation = useMutation({
@@ -252,30 +260,27 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       case 'DELETE_TABLE':
         setTables(prev => prev.filter(t => t.id !== action.payload));
         break;
-      case 'ADD_CARD_PRODUCT':
-        setCardProducts(prev => [...prev, action.payload]);
+      case 'ADD_CARD_PRODUCT': {
+        const { id, createdAt, updatedAt, ...productData } = action.payload;
+        createCardProductMutation.mutate(productData);
         break;
+      }
       case 'UPDATE_CARD_PRODUCT':
-        setCardProducts(prev => prev.map(p => p.id === action.payload.id ? action.payload : p));
+        updateCardProductMutation.mutate(action.payload);
         break;
       case 'DELETE_CARD_PRODUCT':
-        setCardProducts(prev => prev.filter(p => p.id !== action.payload));
-        // Also delete all cards in this product
-        setCards(prev => prev.filter(c => c.productId !== action.payload));
+        deleteCardProductMutation.mutate(action.payload);
         break;
-      case 'ADD_CARD':
-        // Set productId if not set (for new cards)
-        const newCard = action.payload;
-        if (!newCard.productId && cardProducts.length > 0) {
-          newCard.productId = cardProducts[0].id;
-        }
-        setCards(prev => [...prev, newCard]);
+      case 'ADD_CARD': {
+        const { id, createdAt, updatedAt, ...cardData } = action.payload;
+        createCardMutation.mutate(cardData);
         break;
+      }
       case 'UPDATE_CARD':
-        setCards(prev => prev.map(c => c.id === action.payload.id ? action.payload : c));
+        updateCardMutation.mutate(action.payload);
         break;
       case 'DELETE_CARD':
-        setCards(prev => prev.filter(c => c.id !== action.payload));
+        deleteCardMutation.mutate(action.payload);
         break;
       case 'ADD_ACTIVITY': {
         const { id, timestamp, ...activityData } = action.payload;
@@ -283,7 +288,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         break;
       }
     }
-  }, [recipes, cardProducts, createNoteMutation, updateNoteMutation, deleteNoteMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createRecipeMutation, updateRecipeMutation, deleteRecipeMutation, createFileMutation, deleteFileMutation, createActivityMutation]);
+  }, [createNoteMutation, updateNoteMutation, deleteNoteMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createRecipeMutation, updateRecipeMutation, deleteRecipeMutation, createFileMutation, deleteFileMutation, createCardProductMutation, updateCardProductMutation, deleteCardProductMutation, createCardMutation, updateCardMutation, deleteCardMutation, createActivityMutation]);
 
   const addActivity = useCallback((action: ActivityItem['action'], entityType: ActivityItem['entityType'], entityTitle: string) => {
     createActivityMutation.mutate({
