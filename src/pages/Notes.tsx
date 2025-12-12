@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, Search, Trash2, FileText, Check, HelpCircle, Bold, Italic, Heading1, Heading2, Heading3, List, Edit, Save } from 'lucide-react';
+import { Plus, Search, Trash2, FileText, Check, HelpCircle, Bold, Italic, Heading1, Heading2, Heading3, List, Edit, Save, Table } from 'lucide-react';
 import { useData } from '../contexts/FakeDataContext';
 import { Note } from '../types';
 import { Modal } from '../components/Modal';
@@ -138,15 +138,119 @@ export function Notes() {
 
   // Simple markdown to HTML (basic)
   const renderMarkdown = (text: string): string => {
-    return text
-      .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>')
-      .replace(/^## (.+)$/gm, '<h2 class="text-xl font-semibold mt-4 mb-2">$1</h2>')
-      .replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
-      .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4">$1. $2</li>')
-      .replace(/\n/g, '<br />');
+    let html = text;
+    
+    // Tables (must be processed before other replacements)
+    html = html.replace(/\|(.+)\|/g, (match, content) => {
+      // Check if this is part of a table (has multiple rows with |)
+      const lines = html.split('\n');
+      const currentLineIndex = lines.findIndex(line => line.includes(match));
+      if (currentLineIndex === -1) return match;
+      
+      // Check if next line is a separator (contains ---)
+      const nextLine = lines[currentLineIndex + 1];
+      if (nextLine && /^\|[\s\-:]+\|/.test(nextLine)) {
+        // This is a table - process all table rows
+        let tableHtml = '<table class="min-w-full border-collapse border border-border my-4"><thead><tr>';
+        let inTable = false;
+        let isHeader = true;
+        let rows: string[] = [];
+        
+        for (let i = currentLineIndex; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line.includes('|')) break;
+          
+          if (/^\|[\s\-:]+\|/.test(line)) {
+            // Separator row - close header, start body
+            if (isHeader) {
+              tableHtml += '</tr></thead><tbody>';
+              isHeader = false;
+            }
+            continue;
+          }
+          
+          const cells = line.split('|').filter(cell => cell.trim() !== '');
+          if (cells.length === 0) break;
+          
+          if (isHeader) {
+            cells.forEach(cell => {
+              tableHtml += `<th class="border border-border px-4 py-2 text-left font-semibold bg-muted/50">${cell.trim()}</th>`;
+            });
+          } else {
+            if (!inTable) {
+              tableHtml += '<tbody>';
+              inTable = true;
+            }
+            tableHtml += '<tr>';
+            cells.forEach(cell => {
+              tableHtml += `<td class="border border-border px-4 py-2">${cell.trim()}</td>`;
+            });
+            tableHtml += '</tr>';
+          }
+        }
+        
+        if (inTable) tableHtml += '</tbody>';
+        tableHtml += '</table>';
+        
+        // Replace all table lines with the HTML
+        let tableEnd = currentLineIndex;
+        for (let i = currentLineIndex; i < lines.length; i++) {
+          if (!lines[i].includes('|') || lines[i].trim() === '') {
+            tableEnd = i;
+            break;
+          }
+        }
+        
+        return tableHtml;
+      }
+      return match;
+    });
+    
+    // Process tables more reliably
+    const tableRegex = /(\|.+\|\n\|[\s\-:]+\|\n(?:\|.+\|\n?)+)/g;
+    html = html.replace(tableRegex, (tableMatch) => {
+      const rows = tableMatch.trim().split('\n').filter(row => row.trim() && !/^\|[\s\-:]+\|$/.test(row));
+      if (rows.length === 0) return tableMatch;
+      
+      const headerRow = rows[0];
+      const headerCells = headerRow.split('|').filter(cell => cell.trim() !== '').map(cell => cell.trim());
+      
+      let tableHtml = '<div class="overflow-x-auto my-4"><table class="min-w-full border-collapse border border-border"><thead><tr>';
+      headerCells.forEach(cell => {
+        tableHtml += `<th class="border border-border px-4 py-2 text-left font-semibold bg-muted/50">${cell}</th>`;
+      });
+      tableHtml += '</tr></thead><tbody>';
+      
+      for (let i = 1; i < rows.length; i++) {
+        const cells = rows[i].split('|').filter(cell => cell.trim() !== '').map(cell => cell.trim());
+        tableHtml += '<tr>';
+        cells.forEach(cell => {
+          tableHtml += `<td class="border border-border px-4 py-2">${cell}</td>`;
+        });
+        tableHtml += '</tr>';
+      }
+      
+      tableHtml += '</tbody></table></div>';
+      return tableHtml;
+    });
+    
+    // Headings
+    html = html.replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2 class="text-xl font-semibold mt-4 mb-2">$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>');
+    
+    // Bold and italic
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    // Lists
+    html = html.replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>');
+    html = html.replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4">$1. $2</li>');
+    
+    // Line breaks
+    html = html.replace(/\n/g, '<br />');
+    
+    return html;
   };
 
   return (
@@ -283,6 +387,10 @@ export function Notes() {
                           <code className="text-xs bg-muted px-1.5 py-0.5 rounded">1. List item</code>
                           <p className="text-muted-foreground text-xs mt-1">Numbered list</p>
                         </div>
+                        <div>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">| Col 1 | Col 2 |</code>
+                          <p className="text-muted-foreground text-xs mt-1">Table (use toolbar button)</p>
+                        </div>
                       </div>
                     </div>
                   </PopoverContent>
@@ -397,32 +505,66 @@ export function Notes() {
                         >
                           <Heading3 className="w-4 h-4" />
                         </button>
-                        <div className="w-px h-4 bg-border mx-0.5" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const textarea = textareaRef.current;
-                            if (!textarea) return;
-                            const start = textarea.selectionStart;
-                            const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
-                            const before = localContent.substring(0, lineStart);
-                            const after = localContent.substring(lineStart);
-                            const newContent = before + '- ' + after;
-                            setLocalContent(newContent);
-                            syncContentToNote(newContent);
-                            setTimeout(() => {
-                              if (textareaRef.current) {
-                                textareaRef.current.focus();
-                                textareaRef.current.setSelectionRange(lineStart + 2, lineStart + 2);
-                              }
-                            }, 0);
-                          }}
-                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                          title="Bullet List"
-                        >
-                          <List className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <div className="w-px h-4 bg-border mx-0.5" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const textarea = textareaRef.current;
+                          if (!textarea) return;
+                          const start = textarea.selectionStart;
+                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                          const before = localContent.substring(0, lineStart);
+                          const after = localContent.substring(lineStart);
+                          const newContent = before + '- ' + after;
+                          setLocalContent(newContent);
+                          syncContentToNote(newContent);
+                          setTimeout(() => {
+                            if (textareaRef.current) {
+                              textareaRef.current.focus();
+                              textareaRef.current.setSelectionRange(lineStart + 2, lineStart + 2);
+                            }
+                          }, 0);
+                        }}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                        title="Bullet List"
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                      <div className="w-px h-4 bg-border mx-0.5" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const textarea = textareaRef.current;
+                          if (!textarea) return;
+                          const start = textarea.selectionStart;
+                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                          const before = localContent.substring(0, lineStart);
+                          const after = localContent.substring(lineStart);
+                          
+                          // Insert a 3-column table template
+                          const tableTemplate = `| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| Row 1    |          |          |
+| Row 2    |          |          |
+`;
+                          const newContent = before + (lineStart === 0 ? '' : '\n') + tableTemplate + after;
+                          setLocalContent(newContent);
+                          syncContentToNote(newContent);
+                          setTimeout(() => {
+                            if (textareaRef.current) {
+                              // Position cursor in first cell of first data row
+                              const cursorPos = lineStart + (lineStart === 0 ? 0 : 1) + tableTemplate.indexOf('Row 1') + 6;
+                              textareaRef.current.focus();
+                              textareaRef.current.setSelectionRange(cursorPos, cursorPos);
+                            }
+                          }, 0);
+                        }}
+                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                        title="Insert Table"
+                      >
+                        <Table className="w-4 h-4" />
+                      </button>
+                    </div>
                     </div>
                     <textarea
                       ref={textareaRef}
