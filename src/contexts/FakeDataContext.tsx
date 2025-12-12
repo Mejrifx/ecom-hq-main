@@ -309,8 +309,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setTables(prev => prev.filter(t => t.id !== action.payload));
         break;
       case 'ADD_CARD_PRODUCT': {
-        const { id, createdAt, updatedAt, ...productData } = action.payload;
-        createCardProductMutation.mutate(productData);
+        // Payload is already the product data without id/createdAt/updatedAt
+        createCardProductMutation.mutate(action.payload, {
+          onSuccess: (createdProduct) => {
+            // After successful creation, invalidate queries to refresh the list
+            queryClient.invalidateQueries({ queryKey: ['cardProducts'] });
+          },
+        });
         break;
       }
       case 'UPDATE_CARD_PRODUCT':

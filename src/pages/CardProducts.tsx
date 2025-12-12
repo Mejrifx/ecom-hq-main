@@ -27,27 +27,35 @@ export function CardProducts() {
     return (state.cards || []).filter(c => c.productId === selectedProduct.id);
   }, [state.cards, selectedProduct]);
 
-  // Auto-select first product on mount
+  // Auto-select first product on mount or when new product is created
   React.useEffect(() => {
     if ((state.cardProducts || []).length > 0 && !selectedProductId) {
       setSelectedProductId(state.cardProducts[0].id);
     }
   }, [state.cardProducts, selectedProductId]);
 
+  // When a new product is created and appears in state, select it
+  React.useEffect(() => {
+    if (state.cardProducts.length > 0) {
+      const latestProduct = state.cardProducts[0]; // Products are ordered by created_at DESC
+      if (!selectedProductId || !state.cardProducts.find(p => p.id === selectedProductId)) {
+        setSelectedProductId(latestProduct.id);
+      }
+    }
+  }, [state.cardProducts.length]);
+
   const handleCreateProduct = async (name: string, description?: string) => {
     try {
       setError(null);
-      const product: CardProduct = {
-        id: crypto.randomUUID(),
+      // Create product data without ID - let database generate it
+      const productData: Omit<CardProduct, 'id' | 'createdAt' | 'updatedAt'> = {
         name,
         description,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
-      dispatch({ type: 'ADD_CARD_PRODUCT', payload: product });
+      dispatch({ type: 'ADD_CARD_PRODUCT', payload: productData });
       addActivity('created', 'cardProduct', name);
-      setSelectedProductId(product.id);
       setCreateProductModalOpen(false);
+      // Note: selectedProductId will be set automatically when the product is created and loaded from DB
     } catch (err: any) {
       console.error('Error creating card product:', err);
       setError(err.message || 'Failed to create card product. Please check the browser console and ensure database tables are set up.');
