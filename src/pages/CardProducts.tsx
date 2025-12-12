@@ -669,3 +669,107 @@ function CardModal({ isOpen, onClose, onSubmit, card, productName }: CardModalPr
     </Modal>
   );
 }
+
+interface CardViewerProps {
+  card: Card;
+  onClose: () => void;
+}
+
+function CardViewer({ card, onClose }: CardViewerProps) {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div 
+        className="relative w-full max-w-md mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute -top-12 right-0 text-white hover:text-white/80 transition-colors z-10"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        {/* Card Container with Flip Animation */}
+        <div className="relative h-[600px] perspective-1000">
+          <div
+            className={`relative w-full h-full transition-transform duration-700 transform-style-preserve-3d ${
+              isFlipped ? 'rotate-y-180' : ''
+            }`}
+            style={{
+              transformStyle: 'preserve-3d',
+            }}
+          >
+            {/* Front Side */}
+            <div
+              className={`absolute inset-0 w-full h-full backface-hidden ${
+                isFlipped ? 'hidden' : ''
+              }`}
+              style={{
+                backfaceVisibility: 'hidden',
+                transform: 'rotateY(0deg)',
+              }}
+            >
+              <div className="recipe-card bg-card h-full flex flex-col">
+                <div className="recipe-card-image flex-1">
+                  {card.imageUrl ? (
+                    <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                      <ImageIcon className="w-24 h-24 text-muted-foreground/30" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-6 text-center">
+                  <h2 className="text-2xl font-bold text-foreground">{card.title}</h2>
+                </div>
+              </div>
+            </div>
+
+            {/* Back Side */}
+            <div
+              className={`absolute inset-0 w-full h-full backface-hidden ${
+                !isFlipped ? 'hidden' : ''
+              }`}
+              style={{
+                backfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)',
+              }}
+            >
+              <div className="recipe-card bg-card h-full p-6 overflow-y-auto">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-3">Ingredients</h3>
+                    <div className="text-foreground whitespace-pre-line">
+                      {card.ingredients || 'No ingredients listed'}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-3">Instructions</h3>
+                    <div className="text-foreground whitespace-pre-line">
+                      {card.instructions || 'No instructions provided'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Flip Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsFlipped(!isFlipped);
+          }}
+          className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 btn-primary flex items-center gap-2"
+        >
+          <RotateCcw className="w-4 h-4" />
+          {isFlipped ? 'View Front' : 'View Back'}
+        </button>
+      </div>
+    </div>
+  );
+}
