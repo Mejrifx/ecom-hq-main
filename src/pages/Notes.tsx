@@ -14,6 +14,7 @@ export function Notes() {
   const [saveIndicator, setSaveIndicator] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const cursorPositionRef = useRef<number | null>(null);
 
   // Filter notes by search
   const filteredNotes = useMemo(() => {
@@ -49,7 +50,7 @@ export function Notes() {
     setCreateModalOpen(false);
   };
 
-  const handleUpdateNote = (updates: Partial<Note>, preserveCursor: boolean = false) => {
+  const handleUpdateNote = (updates: Partial<Note>) => {
     if (!selectedNote) return;
     const updatedNote: Note = {
       ...selectedNote,
@@ -58,21 +59,20 @@ export function Notes() {
     };
     dispatch({ type: 'UPDATE_NOTE', payload: updatedNote });
     
-    // Preserve cursor position if needed
-    if (preserveCursor && textareaRef.current) {
-      const cursorPos = textareaRef.current.selectionStart;
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          textareaRef.current.setSelectionRange(cursorPos, cursorPos);
-        }
-      }, 0);
-    }
-    
     // Fake save indicator
     setSaveIndicator(true);
     setTimeout(() => setSaveIndicator(false), 1500);
   };
+
+  // Restore cursor position after content updates
+  useEffect(() => {
+    if (cursorPositionRef.current !== null && textareaRef.current) {
+      const pos = cursorPositionRef.current;
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(pos, pos);
+      cursorPositionRef.current = null;
+    }
+  }, [selectedNote?.content]);
 
   const handleDeleteNote = () => {
     if (!selectedNote) return;
@@ -383,16 +383,27 @@ export function Notes() {
                     ref={textareaRef}
                     value={selectedNote.content}
                     onChange={e => {
-                      // Preserve cursor position when typing
-                      const cursorPos = e.target.selectionStart;
-                      handleUpdateNote({ content: e.target.value }, true);
-                      // Restore cursor position after state update
-                      setTimeout(() => {
-                        if (textareaRef.current) {
-                          const newCursorPos = Math.min(cursorPos, e.target.value.length);
-                          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-                        }
-                      }, 0);
+                      // Capture cursor position before update
+                      const textarea = e.target;
+                      const cursorPos = textarea.selectionStart;
+                      const newValue = textarea.value;
+                      
+                      // Calculate new cursor position (adjust if text was inserted/deleted)
+                      const oldValue = selectedNote.content;
+                      const lengthDiff = newValue.length - oldValue.length;
+                      const newCursorPos = cursorPos;
+                      
+                      // Store cursor position to restore after state update
+                      cursorPositionRef.current = newCursorPos;
+                      
+                      // Update content
+                      handleUpdateNote({ content: newValue });
+                    }}
+                    onSelect={e => {
+                      // Track cursor position on selection changes
+                      if (textareaRef.current) {
+                        cursorPositionRef.current = textareaRef.current.selectionStart;
+                      }
                     }}
                     placeholder="Start writing... (supports markdown)"
                     className="input-base min-h-[200px] resize-y font-mono text-sm"
