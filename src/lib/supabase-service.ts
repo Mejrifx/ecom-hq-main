@@ -55,15 +55,6 @@ const rowToCardProduct = (row: any): CardProduct => ({
   updatedAt: new Date(row.updated_at),
 });
 
-// Helper to convert database row to CardProduct
-const rowToCardProduct = (row: any): CardProduct => ({
-  id: row.id,
-  name: row.name,
-  description: row.description || undefined,
-  createdAt: new Date(row.created_at),
-  updatedAt: new Date(row.updated_at),
-});
-
 // Helper to convert database row to Card
 const rowToCard = (row: any): Card => ({
   id: row.id,
