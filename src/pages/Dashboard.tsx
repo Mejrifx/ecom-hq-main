@@ -151,19 +151,19 @@ export function Dashboard() {
         onCreate={handleCreateTask}
       />
       <Modal
-        isOpen={recipeModalOpen}
-        onClose={() => setRecipeModalOpen(false)}
-        title="Create Recipe Card"
+        isOpen={cardProductModalOpen}
+        onClose={() => setCardProductModalOpen(false)}
+        title="Create Card Product"
       >
         <p className="text-muted-foreground mb-4">
-          You'll be redirected to the Recipe Cards page to create a new card with the full editor.
+          You'll be redirected to the Card Products page to create a new product with the full editor.
         </p>
         <div className="flex justify-end gap-3">
-          <button onClick={() => setRecipeModalOpen(false)} className="btn-secondary">
+          <button onClick={() => setCardProductModalOpen(false)} className="btn-secondary">
             Cancel
           </button>
-          <button onClick={handleCreateRecipe} className="btn-primary">
-            Go to Recipe Cards
+          <button onClick={handleCreateCardProduct} className="btn-primary">
+            Go to Card Products
           </button>
         </div>
       </Modal>
