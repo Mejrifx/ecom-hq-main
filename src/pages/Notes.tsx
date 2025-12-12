@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, Search, Trash2, FileText, Check, HelpCircle, Bold, Italic, Heading1, Heading2, Heading3, List } from 'lucide-react';
+import { Plus, Search, Trash2, FileText, Check, HelpCircle, Bold, Italic, Heading1, Heading2, Heading3, List, Edit, Save } from 'lucide-react';
 import { useData } from '../contexts/FakeDataContext';
 import { Note } from '../types';
 import { Modal } from '../components/Modal';
@@ -13,6 +13,7 @@ export function Notes() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [saveIndicator, setSaveIndicator] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [localContent, setLocalContent] = useState('');
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -34,8 +35,9 @@ export function Notes() {
   useEffect(() => {
     if (selectedNote) {
       setLocalContent(selectedNote.content);
+      setIsEditing(false); // Reset edit mode when switching notes
     }
-  }, [selectedNote?.id, selectedNote?.content]);
+  }, [selectedNote?.id]);
 
   // Auto-select first note on mount
   useEffect(() => {
@@ -80,6 +82,14 @@ export function Notes() {
     updateTimeoutRef.current = setTimeout(() => {
       handleUpdateNote({ content });
     }, 300);
+  };
+
+  // Save and exit edit mode
+  const handleSave = () => {
+    if (selectedNote) {
+      handleUpdateNote({ content: localContent });
+      setIsEditing(false);
+    }
   };
 
   const handleDeleteNote = () => {
@@ -215,6 +225,23 @@ export function Notes() {
                     Saved
                   </span>
                 )}
+                {!isEditing ? (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="btn-icon text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    title="Edit note"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSave}
+                    className="btn-icon text-primary hover:text-primary hover:bg-primary/10"
+                    title="Save and exit edit mode"
+                  >
+                    <Save className="w-4 h-4" />
+                  </button>
+                )}
                 <Popover open={hintOpen} onOpenChange={setHintOpen}>
                   <PopoverTrigger asChild>
                     <button
@@ -271,154 +298,159 @@ export function Notes() {
 
             {/* Editor & Preview */}
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="max-w-3xl mx-auto space-y-6">
-                {/* Editor */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-muted-foreground">
-                      Content (Markdown)
-                    </label>
-                    {/* Formatting Toolbar */}
-                    <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-md">
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('**', '**', 'bold text')}
-                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                        title="Bold"
-                      >
-                        <Bold className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => insertMarkdown('*', '*', 'italic text')}
-                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                        title="Italic"
-                      >
-                        <Italic className="w-4 h-4" />
-                      </button>
-                      <div className="w-px h-4 bg-border mx-0.5" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const textarea = textareaRef.current;
-                          if (!textarea) return;
-                          const start = textarea.selectionStart;
-                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
-                          const before = localContent.substring(0, lineStart);
-                          const after = localContent.substring(lineStart);
-                          const newContent = before + '# ' + after;
-                          setLocalContent(newContent);
-                          syncContentToNote(newContent);
-                          setTimeout(() => {
-                            if (textareaRef.current) {
-                              textareaRef.current.focus();
-                              textareaRef.current.setSelectionRange(lineStart + 2, lineStart + 2);
-                            }
-                          }, 0);
-                        }}
-                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                        title="Heading 1"
-                      >
-                        <Heading1 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const textarea = textareaRef.current;
-                          if (!textarea) return;
-                          const start = textarea.selectionStart;
-                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
-                          const before = localContent.substring(0, lineStart);
-                          const after = localContent.substring(lineStart);
-                          const newContent = before + '## ' + after;
-                          setLocalContent(newContent);
-                          syncContentToNote(newContent);
-                          setTimeout(() => {
-                            if (textareaRef.current) {
-                              textareaRef.current.focus();
-                              textareaRef.current.setSelectionRange(lineStart + 3, lineStart + 3);
-                            }
-                          }, 0);
-                        }}
-                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                        title="Heading 2"
-                      >
-                        <Heading2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const textarea = textareaRef.current;
-                          if (!textarea) return;
-                          const start = textarea.selectionStart;
-                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
-                          const before = localContent.substring(0, lineStart);
-                          const after = localContent.substring(lineStart);
-                          const newContent = before + '### ' + after;
-                          setLocalContent(newContent);
-                          syncContentToNote(newContent);
-                          setTimeout(() => {
-                            if (textareaRef.current) {
-                              textareaRef.current.focus();
-                              textareaRef.current.setSelectionRange(lineStart + 4, lineStart + 4);
-                            }
-                          }, 0);
-                        }}
-                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                        title="Heading 3"
-                      >
-                        <Heading3 className="w-4 h-4" />
-                      </button>
-                      <div className="w-px h-4 bg-border mx-0.5" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const textarea = textareaRef.current;
-                          if (!textarea) return;
-                          const start = textarea.selectionStart;
-                          const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
-                          const before = localContent.substring(0, lineStart);
-                          const after = localContent.substring(lineStart);
-                          const newContent = before + '- ' + after;
-                          setLocalContent(newContent);
-                          syncContentToNote(newContent);
-                          setTimeout(() => {
-                            if (textareaRef.current) {
-                              textareaRef.current.focus();
-                              textareaRef.current.setSelectionRange(lineStart + 2, lineStart + 2);
-                            }
-                          }, 0);
-                        }}
-                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                        title="Bullet List"
-                      >
-                        <List className="w-4 h-4" />
-                      </button>
+              <div className="max-w-3xl mx-auto">
+                {isEditing ? (
+                  /* Edit Mode - Show Editor */
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-muted-foreground">
+                        Content (Markdown)
+                      </label>
+                      {/* Formatting Toolbar */}
+                      <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-md">
+                        <button
+                          type="button"
+                          onClick={() => insertMarkdown('**', '**', 'bold text')}
+                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                          title="Bold"
+                        >
+                          <Bold className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertMarkdown('*', '*', 'italic text')}
+                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                          title="Italic"
+                        >
+                          <Italic className="w-4 h-4" />
+                        </button>
+                        <div className="w-px h-4 bg-border mx-0.5" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const textarea = textareaRef.current;
+                            if (!textarea) return;
+                            const start = textarea.selectionStart;
+                            const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                            const before = localContent.substring(0, lineStart);
+                            const after = localContent.substring(lineStart);
+                            const newContent = before + '# ' + after;
+                            setLocalContent(newContent);
+                            syncContentToNote(newContent);
+                            setTimeout(() => {
+                              if (textareaRef.current) {
+                                textareaRef.current.focus();
+                                textareaRef.current.setSelectionRange(lineStart + 2, lineStart + 2);
+                              }
+                            }, 0);
+                          }}
+                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                          title="Heading 1"
+                        >
+                          <Heading1 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const textarea = textareaRef.current;
+                            if (!textarea) return;
+                            const start = textarea.selectionStart;
+                            const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                            const before = localContent.substring(0, lineStart);
+                            const after = localContent.substring(lineStart);
+                            const newContent = before + '## ' + after;
+                            setLocalContent(newContent);
+                            syncContentToNote(newContent);
+                            setTimeout(() => {
+                              if (textareaRef.current) {
+                                textareaRef.current.focus();
+                                textareaRef.current.setSelectionRange(lineStart + 3, lineStart + 3);
+                              }
+                            }, 0);
+                          }}
+                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                          title="Heading 2"
+                        >
+                          <Heading2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const textarea = textareaRef.current;
+                            if (!textarea) return;
+                            const start = textarea.selectionStart;
+                            const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                            const before = localContent.substring(0, lineStart);
+                            const after = localContent.substring(lineStart);
+                            const newContent = before + '### ' + after;
+                            setLocalContent(newContent);
+                            syncContentToNote(newContent);
+                            setTimeout(() => {
+                              if (textareaRef.current) {
+                                textareaRef.current.focus();
+                                textareaRef.current.setSelectionRange(lineStart + 4, lineStart + 4);
+                              }
+                            }, 0);
+                          }}
+                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                          title="Heading 3"
+                        >
+                          <Heading3 className="w-4 h-4" />
+                        </button>
+                        <div className="w-px h-4 bg-border mx-0.5" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const textarea = textareaRef.current;
+                            if (!textarea) return;
+                            const start = textarea.selectionStart;
+                            const lineStart = localContent.lastIndexOf('\n', start - 1) + 1;
+                            const before = localContent.substring(0, lineStart);
+                            const after = localContent.substring(lineStart);
+                            const newContent = before + '- ' + after;
+                            setLocalContent(newContent);
+                            syncContentToNote(newContent);
+                            setTimeout(() => {
+                              if (textareaRef.current) {
+                                textareaRef.current.focus();
+                                textareaRef.current.setSelectionRange(lineStart + 2, lineStart + 2);
+                              }
+                            }, 0);
+                          }}
+                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+                          title="Bullet List"
+                        >
+                          <List className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <textarea
-                    ref={textareaRef}
-                    value={localContent}
-                    onChange={e => {
-                      const newValue = e.target.value;
-                      setLocalContent(newValue);
-                      syncContentToNote(newValue);
-                    }}
-                    placeholder="Start writing... (supports markdown)"
-                    className="input-base min-h-[200px] resize-y font-mono text-sm"
-                  />
-                </div>
-
-                {/* Preview */}
-                {localContent && (
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-2">
-                      Preview
-                    </label>
-                    <div
-                      className="prose prose-sm max-w-none p-4 rounded-lg bg-muted/50 text-foreground"
-                      dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent) }}
+                    <textarea
+                      ref={textareaRef}
+                      value={localContent}
+                      onChange={e => {
+                        const newValue = e.target.value;
+                        setLocalContent(newValue);
+                        syncContentToNote(newValue);
+                      }}
+                      placeholder="Start writing... (supports markdown)"
+                      className="input-base min-h-[400px] resize-y font-mono text-sm"
+                      autoFocus
                     />
+                  </div>
+                ) : (
+                  /* Preview Mode - Show Rendered Content */
+                  <div>
+                    {localContent ? (
+                      <div
+                        className="prose prose-sm max-w-none p-6 rounded-lg bg-card border border-border text-foreground"
+                        dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent) }}
+                      />
+                    ) : (
+                      <div className="p-6 text-center text-muted-foreground">
+                        <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>No content yet. Click Edit to start writing.</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
