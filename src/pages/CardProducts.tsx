@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Copy, ImageIcon, Package, ChevronRight, RotateCcw, X } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Plus, Pencil, Trash2, Copy, ImageIcon, Package, ChevronRight, RotateCcw, X, AlertCircle } from 'lucide-react';
 import { useData } from '../contexts/FakeDataContext';
 import { CardProduct, Card } from '../types';
 import { Modal } from '../components/Modal';
@@ -14,6 +14,7 @@ export function CardProducts() {
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
   const [deleteCardId, setDeleteCardId] = useState<string | null>(null);
   const [viewingCard, setViewingCard] = useState<Card | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Get selected product
   const selectedProduct = useMemo(() => {
@@ -33,18 +34,24 @@ export function CardProducts() {
     }
   }, [state.cardProducts, selectedProductId]);
 
-  const handleCreateProduct = (name: string, description?: string) => {
-    const product: CardProduct = {
-      id: crypto.randomUUID(),
-      name,
-      description,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    dispatch({ type: 'ADD_CARD_PRODUCT', payload: product });
-    addActivity('created', 'cardProduct', name);
-    setSelectedProductId(product.id);
-    setCreateProductModalOpen(false);
+  const handleCreateProduct = async (name: string, description?: string) => {
+    try {
+      setError(null);
+      const product: CardProduct = {
+        id: crypto.randomUUID(),
+        name,
+        description,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      dispatch({ type: 'ADD_CARD_PRODUCT', payload: product });
+      addActivity('created', 'cardProduct', name);
+      setSelectedProductId(product.id);
+      setCreateProductModalOpen(false);
+    } catch (err: any) {
+      console.error('Error creating card product:', err);
+      setError(err.message || 'Failed to create card product. Please check the browser console and ensure database tables are set up.');
+    }
   };
 
   const handleUpdateProduct = (product: CardProduct) => {
@@ -71,18 +78,24 @@ export function CardProducts() {
     }
   };
 
-  const handleCreateCard = (card: Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'productId'>) => {
+  const handleCreateCard = async (card: Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'productId'>) => {
     if (!selectedProduct) return;
-    const newCard: Card = {
-      ...card,
-      productId: selectedProduct.id,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    dispatch({ type: 'ADD_CARD', payload: newCard });
-    addActivity('created', 'card', card.title);
-    setCreateCardModalOpen(false);
+    try {
+      setError(null);
+      const newCard: Card = {
+        ...card,
+        productId: selectedProduct.id,
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      dispatch({ type: 'ADD_CARD', payload: newCard });
+      addActivity('created', 'card', card.title);
+      setCreateCardModalOpen(false);
+    } catch (err: any) {
+      console.error('Error creating card:', err);
+      setError(err.message || 'Failed to create card. Please check the browser console and ensure database tables are set up.');
+    }
   };
 
   const handleUpdateCard = (card: Card) => {
@@ -122,6 +135,18 @@ export function CardProducts() {
         {/* Header */}
         <div className="p-4 border-b border-border space-y-3">
           <h2 className="text-lg font-semibold text-foreground">Card Products</h2>
+          {error && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium mb-1">Database Error</p>
+                <p className="text-xs">{error}</p>
+                <p className="text-xs mt-2">
+                  Run the SQL script: <code className="bg-destructive/20 px-1 rounded">add-card-products-tables.sql</code>
+                </p>
+              </div>
+            </div>
+          )}
           <button
             onClick={() => setCreateProductModalOpen(true)}
             className="btn-primary w-full text-sm"
