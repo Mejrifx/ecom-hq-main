@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Copy, ImageIcon, Package, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Copy, ImageIcon, Package, ChevronRight, RotateCcw, X } from 'lucide-react';
 import { useData } from '../contexts/FakeDataContext';
 import { CardProduct, Card } from '../types';
 import { Modal } from '../components/Modal';
@@ -13,6 +13,7 @@ export function CardProducts() {
   const [editingCard, setEditingCard] = useState<Card | null>(null);
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
   const [deleteCardId, setDeleteCardId] = useState<string | null>(null);
+  const [viewingCard, setViewingCard] = useState<Card | null>(null);
 
   // Get selected product
   const selectedProduct = useMemo(() => {
@@ -224,6 +225,7 @@ export function CardProducts() {
                     <CardItem
                       key={card.id}
                       card={card}
+                      onView={() => setViewingCard(card)}
                       onEdit={() => setEditingCard(card)}
                       onDelete={() => setDeleteCardId(card.id)}
                       onDuplicate={() => handleDuplicateCard(card.id)}
@@ -311,20 +313,29 @@ export function CardProducts() {
           </button>
         </div>
       </Modal>
+
+      {/* Card Viewer */}
+      {viewingCard && (
+        <CardViewer
+          card={viewingCard}
+          onClose={() => setViewingCard(null)}
+        />
+      )}
     </div>
   );
 }
 
 interface CardItemProps {
   card: Card;
+  onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
 }
 
-function CardItem({ card, onEdit, onDelete, onDuplicate }: CardItemProps) {
+function CardItem({ card, onView, onEdit, onDelete, onDuplicate }: CardItemProps) {
   return (
-    <div className="card-elevated overflow-hidden group">
+    <div className="card-elevated overflow-hidden group cursor-pointer" onClick={onView}>
       {/* Front Side Preview (Image + Title) */}
       <div className="recipe-card-image">
         {card.imageUrl ? (
@@ -345,7 +356,7 @@ function CardItem({ card, onEdit, onDelete, onDuplicate }: CardItemProps) {
         </p>
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
           <button onClick={onEdit} className="btn-icon flex-1 justify-center">
             <Pencil className="w-4 h-4" />
           </button>
