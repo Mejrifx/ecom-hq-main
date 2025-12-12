@@ -397,3 +397,134 @@ export const activityService = {
   },
 };
 
+// Card Products
+export const cardProductsService = {
+  async getAll(): Promise<CardProduct[]> {
+    const { data, error } = await supabase
+      .from('card_products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data.map(rowToCardProduct);
+  },
+
+  async create(product: Omit<CardProduct, 'id' | 'createdAt' | 'updatedAt'>): Promise<CardProduct> {
+    const userId = await getCurrentUserId();
+    const { data, error } = await supabase
+      .from('card_products')
+      .insert({
+        name: product.name,
+        description: product.description || null,
+        user_id: userId,
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return rowToCardProduct(data);
+  },
+
+  async update(product: CardProduct): Promise<CardProduct> {
+    const { data, error } = await supabase
+      .from('card_products')
+      .update({
+        name: product.name,
+        description: product.description || null,
+      })
+      .eq('id', product.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return rowToCardProduct(data);
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('card_products')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+};
+
+// Cards
+export const cardsService = {
+  async getAll(): Promise<Card[]> {
+    const { data, error } = await supabase
+      .from('cards')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data.map(rowToCard);
+  },
+
+  async getByProductId(productId: string): Promise<Card[]> {
+    const { data, error } = await supabase
+      .from('cards')
+      .select('*')
+      .eq('product_id', productId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data.map(rowToCard);
+  },
+
+  async create(card: Omit<Card, 'id' | 'createdAt' | 'updatedAt'>): Promise<Card> {
+    const userId = await getCurrentUserId();
+    const { data, error } = await supabase
+      .from('cards')
+      .insert({
+        product_id: card.productId,
+        title: card.title,
+        image_url: card.imageUrl || null,
+        ingredients: card.ingredients,
+        instructions: card.instructions,
+        user_id: userId,
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating card:', error);
+      throw error;
+    }
+    return rowToCard(data);
+  },
+
+  async update(card: Card): Promise<Card> {
+    const { data, error } = await supabase
+      .from('cards')
+      .update({
+        title: card.title,
+        image_url: card.imageUrl || null,
+        ingredients: card.ingredients,
+        instructions: card.instructions,
+      })
+      .eq('id', card.id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating card:', error);
+      throw error;
+    }
+    return rowToCard(data);
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('cards')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting card:', error);
+      throw error;
+    }
+  },
+};
+
