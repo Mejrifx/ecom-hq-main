@@ -35,10 +35,19 @@ export interface FileItem {
   storagePath?: string; // Path in Supabase Storage
 }
 
+export interface TableData {
+  id: string;
+  title: string;
+  headers: string[];
+  rows: string[][];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface ActivityItem {
   id: string;
   action: 'created' | 'updated' | 'deleted' | 'duplicated';
-  entityType: 'note' | 'task' | 'recipe';
+  entityType: 'note' | 'task' | 'recipe' | 'table';
   entityTitle: string;
   timestamp: Date;
 }

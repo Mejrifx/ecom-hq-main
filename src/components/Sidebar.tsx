@@ -10,6 +10,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Table,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,6 +22,7 @@ const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/notes', label: 'Notes', icon: FileText },
   { path: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { path: '/tables', label: 'Tables', icon: Table },
   { path: '/whiteboard', label: 'Whiteboard', icon: Brush },
   { path: '/recipe-cards', label: 'Recipe Cards', icon: UtensilsCrossed },
   { path: '/files', label: 'Files', icon: FolderOpen },

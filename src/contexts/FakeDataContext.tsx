@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Note, Task, RecipeCard, FileItem, ActivityItem } from '../types';
+import { Note, Task, RecipeCard, FileItem, ActivityItem, TableData } from '../types';
 import {
   notesService,
   tasksService,
@@ -14,6 +14,7 @@ interface State {
   tasks: Task[];
   recipes: RecipeCard[];
   files: FileItem[];
+  tables: TableData[];
   activity: ActivityItem[];
   isLoggedIn: boolean;
 }
@@ -33,6 +34,9 @@ type Action =
   | { type: 'DUPLICATE_RECIPE'; payload: string }
   | { type: 'ADD_FILE'; payload: File }
   | { type: 'DELETE_FILE'; payload: { id: string; storagePath?: string } }
+  | { type: 'ADD_TABLE'; payload: TableData }
+  | { type: 'UPDATE_TABLE'; payload: TableData }
+  | { type: 'DELETE_TABLE'; payload: string }
   | { type: 'ADD_ACTIVITY'; payload: ActivityItem };
 
 interface DataContextValue {
@@ -67,6 +71,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     queryKey: ['files'],
     queryFn: filesService.getAll,
   });
+
+  // Tables - using local state for now (can be connected to backend later)
+  const [tables, setTables] = useState<TableData[]>([]);
 
   const { data: activity = [], isLoading: activityLoading } = useQuery({
     queryKey: ['activity'],
@@ -224,6 +231,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         // Action payload should be { id, storagePath }
         deleteFileMutation.mutate(action.payload);
         break;
+      case 'ADD_TABLE':
+        setTables(prev => [...prev, action.payload]);
+        break;
+      case 'UPDATE_TABLE':
+        setTables(prev => prev.map(t => t.id === action.payload.id ? action.payload : t));
+        break;
+      case 'DELETE_TABLE':
+        setTables(prev => prev.filter(t => t.id !== action.payload));
+        break;
       case 'ADD_ACTIVITY': {
         const { id, timestamp, ...activityData } = action.payload;
         createActivityMutation.mutate(activityData);
@@ -245,6 +261,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     tasks,
     recipes,
     files,
+    tables,
     activity,
     isLoggedIn: false, // Can be extended with auth later
   };

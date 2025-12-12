@@ -8,6 +8,7 @@ import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
 import { Notes } from './pages/Notes';
 import { Tasks } from './pages/Tasks';
+import { Tables } from './pages/Tables';
 import { Whiteboard } from './pages/Whiteboard';
 import { RecipeCards } from './pages/RecipeCards';
 import { Files } from './pages/Files';
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/notes" element={<Notes />} />
                 <Route path="/tasks" element={<Tasks />} />
+                <Route path="/tables" element={<Tables />} />
                 <Route path="/whiteboard" element={<Whiteboard />} />
                 <Route path="/recipe-cards" element={<RecipeCards />} />
                 <Route path="/files" element={<Files />} />
