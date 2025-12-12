@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Trash2, FileText, Check } from 'lucide-react';
+import { Plus, Search, Trash2, FileText, Check, HelpCircle } from 'lucide-react';
 import { useData } from '../contexts/FakeDataContext';
 import { Note } from '../types';
 import { Modal } from '../components/Modal';
+import { Popover, PopoverTrigger, PopoverContent } from '../components/ui/popover';
 
 export function Notes() {
   const { state, dispatch, addActivity } = useData();
@@ -11,6 +12,7 @@ export function Notes() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [saveIndicator, setSaveIndicator] = useState(false);
+  const [hintOpen, setHintOpen] = useState(false);
 
   // Filter notes by search
   const filteredNotes = useMemo(() => {
@@ -157,6 +159,51 @@ export function Notes() {
                     Saved
                   </span>
                 )}
+                <Popover open={hintOpen} onOpenChange={setHintOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="btn-icon text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      title="Markdown formatting hints"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80" align="end">
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-sm text-foreground mb-3">Markdown Formatting</h3>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded"># Heading 1</code>
+                          <p className="text-muted-foreground text-xs mt-1">Large heading</p>
+                        </div>
+                        <div>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">## Heading 2</code>
+                          <p className="text-muted-foreground text-xs mt-1">Medium heading</p>
+                        </div>
+                        <div>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">### Heading 3</code>
+                          <p className="text-muted-foreground text-xs mt-1">Small heading</p>
+                        </div>
+                        <div>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">**bold text**</code>
+                          <p className="text-muted-foreground text-xs mt-1">Bold formatting</p>
+                        </div>
+                        <div>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">*italic text*</code>
+                          <p className="text-muted-foreground text-xs mt-1">Italic formatting</p>
+                        </div>
+                        <div>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">- List item</code>
+                          <p className="text-muted-foreground text-xs mt-1">Bullet list</p>
+                        </div>
+                        <div>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">1. List item</code>
+                          <p className="text-muted-foreground text-xs mt-1">Numbered list</p>
+                        </div>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <button
                   onClick={() => setDeleteModalOpen(true)}
                   className="btn-icon text-destructive hover:text-destructive hover:bg-destructive/10"
