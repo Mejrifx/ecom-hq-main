@@ -186,6 +186,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cardProducts'] });
     },
+    onError: (error) => {
+      console.error('Error creating card product:', error);
+    },
   });
 
   const updateCardProductMutation = useMutation({
@@ -206,6 +209,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     mutationFn: cardsService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cards'] });
+    },
+    onError: (error) => {
+      console.error('Error creating card:', error);
     },
   });
 
