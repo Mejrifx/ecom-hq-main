@@ -24,7 +24,7 @@ const navItems = [
   { path: '/tasks', label: 'Tasks', icon: CheckSquare },
   { path: '/tables', label: 'Tables', icon: Table },
   { path: '/whiteboard', label: 'Whiteboard', icon: Brush },
-  { path: '/recipe-cards', label: 'Recipe Cards', icon: UtensilsCrossed },
+  { path: '/card-products', label: 'Card Products', icon: UtensilsCrossed },
   { path: '/files', label: 'Files', icon: FolderOpen },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useCallback, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Note, Task, RecipeCard, FileItem, ActivityItem, TableData } from '../types';
+import { Note, Task, RecipeCard, FileItem, ActivityItem, TableData, CardProduct, Card } from '../types';
 import {
   notesService,
   tasksService,
@@ -15,6 +15,8 @@ interface State {
   recipes: RecipeCard[];
   files: FileItem[];
   tables: TableData[];
+  cardProducts: CardProduct[];
+  cards: Card[];
   activity: ActivityItem[];
   isLoggedIn: boolean;
 }
@@ -37,6 +39,12 @@ type Action =
   | { type: 'ADD_TABLE'; payload: TableData }
   | { type: 'UPDATE_TABLE'; payload: TableData }
   | { type: 'DELETE_TABLE'; payload: string }
+  | { type: 'ADD_CARD_PRODUCT'; payload: CardProduct }
+  | { type: 'UPDATE_CARD_PRODUCT'; payload: CardProduct }
+  | { type: 'DELETE_CARD_PRODUCT'; payload: string }
+  | { type: 'ADD_CARD'; payload: Card }
+  | { type: 'UPDATE_CARD'; payload: Card }
+  | { type: 'DELETE_CARD'; payload: string }
   | { type: 'ADD_ACTIVITY'; payload: ActivityItem };
 
 interface DataContextValue {
@@ -74,6 +82,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   // Tables - using local state for now (can be connected to backend later)
   const [tables, setTables] = useState<TableData[]>([]);
+  
+  // Card Products and Cards - using local state for now
+  const [cardProducts, setCardProducts] = useState<CardProduct[]>([]);
+  const [cards, setCards] = useState<Card[]>([]);
 
   const { data: activity = [], isLoading: activityLoading } = useQuery({
     queryKey: ['activity'],
@@ -240,13 +252,38 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       case 'DELETE_TABLE':
         setTables(prev => prev.filter(t => t.id !== action.payload));
         break;
+      case 'ADD_CARD_PRODUCT':
+        setCardProducts(prev => [...prev, action.payload]);
+        break;
+      case 'UPDATE_CARD_PRODUCT':
+        setCardProducts(prev => prev.map(p => p.id === action.payload.id ? action.payload : p));
+        break;
+      case 'DELETE_CARD_PRODUCT':
+        setCardProducts(prev => prev.filter(p => p.id !== action.payload));
+        // Also delete all cards in this product
+        setCards(prev => prev.filter(c => c.productId !== action.payload));
+        break;
+      case 'ADD_CARD':
+        // Set productId if not set (for new cards)
+        const newCard = action.payload;
+        if (!newCard.productId && cardProducts.length > 0) {
+          newCard.productId = cardProducts[0].id;
+        }
+        setCards(prev => [...prev, newCard]);
+        break;
+      case 'UPDATE_CARD':
+        setCards(prev => prev.map(c => c.id === action.payload.id ? action.payload : c));
+        break;
+      case 'DELETE_CARD':
+        setCards(prev => prev.filter(c => c.id !== action.payload));
+        break;
       case 'ADD_ACTIVITY': {
         const { id, timestamp, ...activityData } = action.payload;
         createActivityMutation.mutate(activityData);
         break;
       }
     }
-  }, [recipes, createNoteMutation, updateNoteMutation, deleteNoteMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createRecipeMutation, updateRecipeMutation, deleteRecipeMutation, createFileMutation, deleteFileMutation, createActivityMutation]);
+  }, [recipes, cardProducts, createNoteMutation, updateNoteMutation, deleteNoteMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createRecipeMutation, updateRecipeMutation, deleteRecipeMutation, createFileMutation, deleteFileMutation, createActivityMutation]);
 
   const addActivity = useCallback((action: ActivityItem['action'], entityType: ActivityItem['entityType'], entityTitle: string) => {
     createActivityMutation.mutate({
@@ -262,6 +299,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     recipes,
     files,
     tables,
+    cardProducts,
+    cards,
     activity,
     isLoggedIn: false, // Can be extended with auth later
   };

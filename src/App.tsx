@@ -10,7 +10,7 @@ import { Notes } from './pages/Notes';
 import { Tasks } from './pages/Tasks';
 import { Tables } from './pages/Tables';
 import { Whiteboard } from './pages/Whiteboard';
-import { RecipeCards } from './pages/RecipeCards';
+import { CardProducts } from './pages/CardProducts';
 import { Files } from './pages/Files';
 import { Settings } from './pages/Settings';
 
@@ -34,7 +34,7 @@ function App() {
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/tables" element={<Tables />} />
                 <Route path="/whiteboard" element={<Whiteboard />} />
-                <Route path="/recipe-cards" element={<RecipeCards />} />
+                <Route path="/card-products" element={<CardProducts />} />
                 <Route path="/files" element={<Files />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>

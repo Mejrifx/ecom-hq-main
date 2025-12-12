@@ -43,3 +43,4 @@ WHERE schemaname = 'storage'
   AND tablename = 'objects'
   AND policyname LIKE '%authenticated%';
 
+

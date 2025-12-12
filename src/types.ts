@@ -16,6 +16,7 @@ export interface Task {
   createdAt: Date;
 }
 
+// Legacy RecipeCard type (kept for backward compatibility)
 export interface RecipeCard {
   id: string;
   title: string;
@@ -25,6 +26,26 @@ export interface RecipeCard {
   cost: number;
   timeMinutes: number;
   createdAt: Date;
+}
+
+// Card Products - New structure
+export interface CardProduct {
+  id: string;
+  name: string; // e.g., "Home Meal Cards", "Lunch-Box Edition", "Desserts Edition"
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Card {
+  id: string;
+  productId: string; // References CardProduct
+  title: string; // Meal name
+  imageUrl: string | null; // Front side image
+  ingredients: string; // Back side - ingredients list
+  instructions: string; // Back side - cooking instructions
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface FileItem {
@@ -47,7 +68,7 @@ export interface TableData {
 export interface ActivityItem {
   id: string;
   action: 'created' | 'updated' | 'deleted' | 'duplicated';
-  entityType: 'note' | 'task' | 'recipe' | 'table';
+  entityType: 'note' | 'task' | 'recipe' | 'table' | 'cardProduct' | 'card';
   entityTitle: string;
   timestamp: Date;
 }
