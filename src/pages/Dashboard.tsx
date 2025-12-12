@@ -12,12 +12,12 @@ export function Dashboard() {
   
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
-  const [recipeModalOpen, setRecipeModalOpen] = useState(false);
+  const [cardProductModalOpen, setCardProductModalOpen] = useState(false);
 
   // Stats
   const totalNotes = state.notes.length;
   const openTasks = state.tasks.filter(t => t.status !== 'done').length;
-  const totalRecipes = state.recipes.length;
+  const totalCardProducts = (state.cardProducts || []).length;
 
   // Recent activity (last 10)
   const recentActivity = state.activity.slice(0, 10);
@@ -50,9 +50,9 @@ export function Dashboard() {
     navigate('/tasks');
   };
 
-  const handleCreateRecipe = () => {
-    setRecipeModalOpen(false);
-    navigate('/recipe-cards');
+  const handleCreateCardProduct = () => {
+    setCardProductModalOpen(false);
+    navigate('/card-products');
   };
 
   return (
@@ -81,8 +81,8 @@ export function Dashboard() {
         />
         <StatCard
           icon={UtensilsCrossed}
-          label="Recipe Cards"
-          value={totalRecipes}
+          label="Card Products"
+          value={totalCardProducts}
           color="text-primary"
           bgColor="bg-primary/10"
         />
@@ -100,9 +100,9 @@ export function Dashboard() {
             <Plus className="w-4 h-4" />
             Task
           </button>
-          <button onClick={() => setRecipeModalOpen(true)} className="btn-accent">
+          <button onClick={() => setCardProductModalOpen(true)} className="btn-accent">
             <Plus className="w-4 h-4" />
-            Recipe Card
+            Card Product
           </button>
         </div>
       </div>
@@ -121,7 +121,7 @@ export function Dashboard() {
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                   {item.entityType === 'note' && <FileText className="w-4 h-4 text-muted-foreground" />}
                   {item.entityType === 'task' && <CheckSquare className="w-4 h-4 text-muted-foreground" />}
-                  {item.entityType === 'recipe' && <UtensilsCrossed className="w-4 h-4 text-muted-foreground" />}
+                  {(item.entityType === 'recipe' || item.entityType === 'cardProduct' || item.entityType === 'card') && <UtensilsCrossed className="w-4 h-4 text-muted-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground">
