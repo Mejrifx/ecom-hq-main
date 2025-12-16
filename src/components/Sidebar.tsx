@@ -20,11 +20,11 @@ interface SidebarProps {
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/notes', label: 'Notes', icon: FileText },
+  { path: '/card-products', label: 'Card Products', icon: UtensilsCrossed },
   { path: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { path: '/notes', label: 'Notes', icon: FileText },
   { path: '/tables', label: 'Tables', icon: Table },
   { path: '/whiteboard', label: 'Whiteboard', icon: Brush },
-  { path: '/card-products', label: 'Card Products', icon: UtensilsCrossed },
   { path: '/files', label: 'Files', icon: FolderOpen },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];

@@ -10,9 +10,9 @@ import {
 
 const navItems = [
   { path: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { path: '/notes', label: 'Notes', icon: FileText },
-  { path: '/tasks', label: 'Tasks', icon: CheckSquare },
   { path: '/card-products', label: 'Cards', icon: UtensilsCrossed },
+  { path: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { path: '/notes', label: 'Notes', icon: FileText },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 

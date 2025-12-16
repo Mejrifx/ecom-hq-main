@@ -806,3 +806,4 @@ function CardViewer({ card, onClose }: CardViewerProps) {
     </div>
   );
 }
+

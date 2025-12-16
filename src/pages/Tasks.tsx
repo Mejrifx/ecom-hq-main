@@ -9,6 +9,7 @@ import {
   useSensors,
   DragStartEvent,
   DragEndEvent,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -207,8 +208,16 @@ interface KanbanColumnProps {
 }
 
 function KanbanColumn({ id, title, tasks, onEdit, onDelete }: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: id,
+  });
+
   return (
-    <div className="kanban-column" id={id}>
+    <div 
+      ref={setNodeRef}
+      className={`kanban-column ${isOver ? 'ring-2 ring-primary' : ''}`}
+      id={id}
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-foreground">{title}</h3>
         <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground font-medium">

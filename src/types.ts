@@ -75,5 +75,5 @@ export interface ActivityItem {
 
 export type TaskStatus = Task['status'];
 
-export const ASSIGNEES = ['You', 'Alex', 'Kim'] as const;
+export const ASSIGNEES = ['Dave', 'Mej'] as const;
 export type Assignee = typeof ASSIGNEES[number];

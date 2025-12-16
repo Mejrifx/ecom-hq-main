@@ -27,3 +27,4 @@ WHERE table_schema = 'public'
   AND table_name = 'recipe_cards';
 
 -- If the query returns no rows, the table has been successfully removed
+
