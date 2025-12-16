@@ -336,13 +336,22 @@ function TaskModal({
   initialAssignee = ASSIGNEES[0],
   initialStatus = 'todo',
 }: TaskModalProps) {
+  // Validate initialAssignee - if it's not in ASSIGNEES, default to first assignee
+  const validInitialAssignee = ASSIGNEES.includes(initialAssignee as any) 
+    ? initialAssignee 
+    : ASSIGNEES[0];
+  
   const [taskTitle, setTaskTitle] = useState(initialTitle);
-  const [assignee, setAssignee] = useState(initialAssignee);
+  const [assignee, setAssignee] = useState(validInitialAssignee);
   const [status, setStatus] = useState<TaskStatus>(initialStatus);
 
   React.useEffect(() => {
     setTaskTitle(initialTitle);
-    setAssignee(initialAssignee);
+    // Validate assignee when it changes
+    const validAssignee = ASSIGNEES.includes(initialAssignee as any) 
+      ? initialAssignee 
+      : ASSIGNEES[0];
+    setAssignee(validAssignee);
     setStatus(initialStatus);
   }, [initialTitle, initialAssignee, initialStatus, isOpen]);
 
