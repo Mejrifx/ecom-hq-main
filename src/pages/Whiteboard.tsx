@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Brush, Eraser, Download, Trash2, Undo, Redo } from 'lucide-react';
+import { Brush, Eraser, Download, Trash2, Undo, Redo, Users } from 'lucide-react';
 import { Slider } from '../components/ui/slider';
+import { supabase } from '../lib/supabase';
+import { whiteboardService } from '../lib/supabase-service';
 
 type Tool = 'pen' | 'eraser';
 
@@ -14,6 +16,9 @@ export function Whiteboard() {
   const [historyStep, setHistoryStep] = useState(-1);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
   const cursorPreviewRef = useRef<HTMLDivElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isLocalChangeRef = useRef(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   // Initialize canvas
   useEffect(() => {
@@ -137,11 +142,12 @@ export function Whiteboard() {
     if (isDrawing) {
       setIsDrawing(false);
       saveToHistory();
+      saveToDatabase(); // Trigger save when drawing stops
     }
   };
 
   // Clear canvas
-  const clearCanvas = () => {
+  const clearCanvas = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -150,6 +156,15 @@ export function Whiteboard() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     saveToHistory();
+    
+    // Immediately save cleared canvas
+    try {
+      isLocalChangeRef.current = true;
+      await whiteboardService.save(canvas.toDataURL());
+      localStorage.setItem('whiteboard-canvas', canvas.toDataURL());
+    } catch (error) {
+      console.error('Error saving cleared canvas:', error);
+    }
   };
 
   // Undo
@@ -196,40 +211,151 @@ export function Whiteboard() {
     link.click();
   };
 
-  // Load canvas from localStorage on mount
+  // Load canvas from database on mount
   useEffect(() => {
-    const saved = localStorage.getItem('whiteboard-canvas');
-    if (saved && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0);
-          saveToHistory();
-        };
-        img.src = saved;
+    const loadCanvas = async () => {
+      try {
+        const data = await whiteboardService.get();
+        if (data && data.canvasData && canvasRef.current) {
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, 0, 0);
+              saveToHistory();
+            };
+            img.src = data.canvasData;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading whiteboard:', error);
+        // Fallback to localStorage if database fails
+        const saved = localStorage.getItem('whiteboard-canvas');
+        if (saved && canvasRef.current) {
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, 0, 0);
+              saveToHistory();
+            };
+            img.src = saved;
+          }
+        }
       }
-    }
+    };
+
+    loadCanvas();
   }, []);
 
-  // Auto-save to localStorage
+  // Set up Supabase Realtime subscription
   useEffect(() => {
+    const channel = supabase
+      .channel('whiteboard-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'whiteboard',
+          filter: 'id=eq.00000000-0000-0000-0000-000000000000',
+        },
+        (payload) => {
+          // Only update if this change wasn't made by us
+          if (!isLocalChangeRef.current && payload.new.canvas_data) {
+            const canvas = canvasRef.current;
+            if (canvas) {
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                const img = new Image();
+                img.onload = () => {
+                  ctx.clearRect(0, 0, canvas.width, canvas.height);
+                  ctx.drawImage(img, 0, 0);
+                  saveToHistory();
+                };
+                img.src = payload.new.canvas_data;
+              }
+            }
+          }
+          isLocalChangeRef.current = false;
+        }
+      )
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Debounced save to database
+  const saveToDatabase = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || historyStep < 0) return;
+    if (!canvas) return;
 
-    const saveInterval = setInterval(() => {
-      const dataUrl = canvas.toDataURL();
-      localStorage.setItem('whiteboard-canvas', dataUrl);
-    }, 2000); // Save every 2 seconds
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
 
-    return () => clearInterval(saveInterval);
-  }, [historyStep]);
+    // Set new timeout to save after 1 second of inactivity
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const dataUrl = canvas.toDataURL();
+        isLocalChangeRef.current = true;
+        await whiteboardService.save(dataUrl);
+        // Also save to localStorage as backup
+        localStorage.setItem('whiteboard-canvas', dataUrl);
+      } catch (error) {
+        console.error('Error saving whiteboard:', error);
+        // Fallback to localStorage
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const dataUrl = canvas.toDataURL();
+          localStorage.setItem('whiteboard-canvas', dataUrl);
+        }
+      }
+    }, 1000); // Save 1 second after last change
+  }, []);
+
+  // Auto-save to database when drawing stops
+  useEffect(() => {
+    if (historyStep >= 0) {
+      saveToDatabase();
+    }
+  }, [historyStep, saveToDatabase]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Toolbar */}
       <div className="flex items-center gap-4 p-4 border-b border-border bg-card">
+        {/* Connection Status */}
+        <div className="flex items-center gap-2 text-sm">
+          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+          <span className="text-muted-foreground">
+            {isConnected ? 'Live' : 'Connecting...'}
+          </span>
+          {isConnected && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Users className="w-4 h-4" />
+              <span>Collaborative</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="w-px h-8 bg-border" />
         {/* Tools */}
         <div className="flex items-center gap-2">
           <button
