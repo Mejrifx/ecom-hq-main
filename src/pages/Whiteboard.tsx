@@ -273,7 +273,10 @@ export function Whiteboard() {
                 img.onload = () => {
                   ctx.clearRect(0, 0, canvas.width, canvas.height);
                   ctx.drawImage(img, 0, 0);
-                  saveToHistory();
+                  // Update history after loading remote change
+                  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                  setHistory([imageData]);
+                  setHistoryStep(0);
                 };
                 img.src = payload.new.canvas_data;
               }
