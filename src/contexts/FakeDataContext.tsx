@@ -44,8 +44,8 @@ type Action =
   | { type: 'ADD_CARD_PRODUCT'; payload: CardProduct }
   | { type: 'UPDATE_CARD_PRODUCT'; payload: CardProduct }
   | { type: 'DELETE_CARD_PRODUCT'; payload: string }
-  | { type: 'ADD_CARD'; payload: Card }
-  | { type: 'UPDATE_CARD'; payload: Card }
+  | { type: 'ADD_CARD'; payload: { cardData: Omit<Card, 'id' | 'createdAt' | 'updatedAt'>; imageFile?: File | null } }
+  | { type: 'UPDATE_CARD'; payload: { card: Card; imageFile?: File | null } }
   | { type: 'DELETE_CARD'; payload: string }
   | { type: 'ADD_ACTIVITY'; payload: ActivityItem };
 
@@ -206,7 +206,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   });
 
   const createCardMutation = useMutation({
-    mutationFn: cardsService.create,
+    mutationFn: ({ cardData, imageFile }: { cardData: Omit<Card, 'id' | 'createdAt' | 'updatedAt'>; imageFile?: File | null }) => 
+      cardsService.create(cardData, imageFile),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cards'] });
     },
@@ -216,7 +217,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   });
 
   const updateCardMutation = useMutation({
-    mutationFn: cardsService.update,
+    mutationFn: ({ card, imageFile }: { card: Card; imageFile?: File | null }) => 
+      cardsService.update(card, imageFile),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cards'] });
     },
@@ -325,8 +327,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         deleteCardProductMutation.mutate(action.payload);
         break;
       case 'ADD_CARD': {
-        const { id, createdAt, updatedAt, ...cardData } = action.payload;
-        createCardMutation.mutate(cardData);
+        createCardMutation.mutate(action.payload);
         break;
       }
       case 'UPDATE_CARD':

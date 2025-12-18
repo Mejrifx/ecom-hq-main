@@ -28,3 +28,6 @@ WHERE table_schema = 'public'
 
 -- If the query returns no rows, the table has been successfully removed
 
+
+
+

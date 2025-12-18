@@ -464,14 +464,56 @@ export const cardsService = {
     return data.map(rowToCard);
   },
 
-  async create(card: Omit<Card, 'id' | 'createdAt' | 'updatedAt'>): Promise<Card> {
+  async uploadImage(file: File): Promise<string> {
     const userId = await getCurrentUserId();
+    
+    // Generate unique file path
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `cards/${userId}/${fileName}`;
+    
+    // Upload file to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('files')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (uploadError) throw uploadError;
+    
+    return filePath;
+  },
+
+  async getImageUrl(storagePath: string): Promise<string> {
+    const { data } = await supabase.storage
+      .from('files')
+      .getPublicUrl(storagePath);
+    
+    return data.publicUrl;
+  },
+
+  async create(card: Omit<Card, 'id' | 'createdAt' | 'updatedAt'>, imageFile?: File | null): Promise<Card> {
+    const userId = await getCurrentUserId();
+    
+    let imagePath: string | null = null;
+    
+    // Upload image if provided
+    if (imageFile) {
+      try {
+        imagePath = await this.uploadImage(imageFile);
+      } catch (error) {
+        console.error('Error uploading card image:', error);
+        throw error;
+      }
+    }
+    
     const { data, error } = await supabase
       .from('cards')
       .insert({
         product_id: card.productId,
         title: card.title,
-        image_url: card.imageUrl || null,
+        image_url: imagePath || card.imageUrl || null,
         ingredients: card.ingredients,
         instructions: card.instructions,
         user_id: userId,
@@ -480,18 +522,38 @@ export const cardsService = {
       .single();
     
     if (error) {
+      // If database insert fails, try to clean up the uploaded image
+      if (imagePath) {
+        await supabase.storage.from('files').remove([imagePath]);
+      }
       console.error('Error creating card:', error);
       throw error;
     }
     return rowToCard(data);
   },
 
-  async update(card: Card): Promise<Card> {
+  async update(card: Card, imageFile?: File | null): Promise<Card> {
+    let imagePath: string | null = card.imageUrl;
+    
+    // Upload new image if provided
+    if (imageFile) {
+      try {
+        // Delete old image if it exists and is a storage path
+        if (card.imageUrl && card.imageUrl.startsWith('cards/')) {
+          await supabase.storage.from('files').remove([card.imageUrl]);
+        }
+        imagePath = await this.uploadImage(imageFile);
+      } catch (error) {
+        console.error('Error uploading card image:', error);
+        throw error;
+      }
+    }
+    
     const { data, error } = await supabase
       .from('cards')
       .update({
         title: card.title,
-        image_url: card.imageUrl || null,
+        image_url: imagePath || null,
         ingredients: card.ingredients,
         instructions: card.instructions,
       })
@@ -507,6 +569,14 @@ export const cardsService = {
   },
 
   async delete(id: string): Promise<void> {
+    // Get the card to find the image path
+    const { data: card } = await supabase
+      .from('cards')
+      .select('image_url')
+      .eq('id', id)
+      .single();
+    
+    // Delete the card from database
     const { error } = await supabase
       .from('cards')
       .delete()
@@ -515,6 +585,11 @@ export const cardsService = {
     if (error) {
       console.error('Error deleting card:', error);
       throw error;
+    }
+    
+    // Delete the image from storage if it exists
+    if (card?.image_url && card.image_url.startsWith('cards/')) {
+      await supabase.storage.from('files').remove([card.image_url]);
     }
   },
 };

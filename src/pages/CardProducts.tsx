@@ -86,18 +86,15 @@ export function CardProducts() {
     }
   };
 
-  const handleCreateCard = async (card: Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'productId'>) => {
+  const handleCreateCard = async (card: Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'productId'>, imageFile?: File | null) => {
     if (!selectedProduct) return;
     try {
       setError(null);
-      const newCard: Card = {
+      const cardData = {
         ...card,
         productId: selectedProduct.id,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
-      dispatch({ type: 'ADD_CARD', payload: newCard });
+      dispatch({ type: 'ADD_CARD', payload: { cardData, imageFile } });
       addActivity('created', 'card', card.title);
       setCreateCardModalOpen(false);
     } catch (err: any) {
@@ -106,8 +103,8 @@ export function CardProducts() {
     }
   };
 
-  const handleUpdateCard = (card: Card) => {
-    dispatch({ type: 'UPDATE_CARD', payload: card });
+  const handleUpdateCard = (card: Card, imageFile?: File | null) => {
+    dispatch({ type: 'UPDATE_CARD', payload: { card, imageFile } });
     addActivity('updated', 'card', card.title);
     setEditingCard(null);
   };
@@ -302,7 +299,13 @@ export function CardProducts() {
           setCreateCardModalOpen(false);
           setEditingCard(null);
         }}
-        onSubmit={editingCard ? handleUpdateCard : handleCreateCard}
+        onSubmit={(cardData, imageFile) => {
+          if (editingCard) {
+            handleUpdateCard(cardData as Card, imageFile);
+          } else {
+            handleCreateCard(cardData as Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'productId'>, imageFile);
+          }
+        }}
         card={editingCard}
         productName={selectedProduct?.name || ''}
       />
@@ -367,12 +370,38 @@ interface CardItemProps {
 }
 
 function CardItem({ card, onView, onEdit, onDelete, onDuplicate }: CardItemProps) {
+  const [imageUrl, setImageUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const loadImage = async () => {
+      if (card.imageUrl) {
+        if (card.imageUrl.startsWith('cards/')) {
+          // Load from Storage
+          try {
+            const { cardsService } = await import('../lib/supabase-service');
+            const url = await cardsService.getImageUrl(card.imageUrl);
+            setImageUrl(url);
+          } catch (error) {
+            console.error('Error loading image:', error);
+            setImageUrl(null);
+          }
+        } else {
+          // Legacy base64 or direct URL
+          setImageUrl(card.imageUrl);
+        }
+      } else {
+        setImageUrl(null);
+      }
+    };
+    loadImage();
+  }, [card.imageUrl]);
+
   return (
     <div className="card-elevated overflow-hidden group cursor-pointer" onClick={onView}>
       {/* Front Side Preview (Image + Title) */}
       <div className="recipe-card-image">
-        {card.imageUrl ? (
-          <img src={card.imageUrl} alt={card.title} />
+        {imageUrl ? (
+          <img src={imageUrl} alt={card.title} />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
             <ImageIcon className="w-12 h-12 text-muted-foreground/30" />
@@ -528,7 +557,7 @@ function EditProductModal({ isOpen, onClose, onUpdate, product }: EditProductMod
 interface CardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (card: Card | Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'productId'>) => void;
+  onSubmit: (card: Card | Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'productId'>, imageFile?: File | null) => void;
   card?: Card | null;
   productName: string;
 }
@@ -537,25 +566,57 @@ function CardModal({ isOpen, onClose, onSubmit, card, productName }: CardModalPr
   const [title, setTitle] = useState(card?.title || '');
   const [ingredients, setIngredients] = useState(card?.ingredients || '');
   const [instructions, setInstructions] = useState(card?.instructions || '');
-  const [imagePreview, setImagePreview] = useState<string | null>(card?.imageUrl || null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
 
   React.useEffect(() => {
-    if (card) {
-      setTitle(card.title);
-      setIngredients(card.ingredients);
-      setInstructions(card.instructions);
-      setImagePreview(card.imageUrl);
-    } else {
-      setTitle('');
-      setIngredients('');
-      setInstructions('');
-      setImagePreview(null);
-    }
+    const loadCardData = async () => {
+      if (card) {
+        setTitle(card.title);
+        setIngredients(card.ingredients);
+        setInstructions(card.instructions);
+        setImageFile(null);
+        
+        // Load image from Storage if exists
+        if (card.imageUrl) {
+          setIsLoadingImage(true);
+          try {
+            // If it's a storage path, get the public URL
+            if (card.imageUrl.startsWith('cards/')) {
+              const { cardsService } = await import('../lib/supabase-service');
+              const imageUrl = await cardsService.getImageUrl(card.imageUrl);
+              setImagePreview(imageUrl);
+            } else {
+              // Legacy base64 data
+              setImagePreview(card.imageUrl);
+            }
+          } catch (error) {
+            console.error('Error loading card image:', error);
+            setImagePreview(null);
+          } finally {
+            setIsLoadingImage(false);
+          }
+        } else {
+          setImagePreview(null);
+        }
+      } else {
+        setTitle('');
+        setIngredients('');
+        setInstructions('');
+        setImagePreview(null);
+        setImageFile(null);
+      }
+    };
+
+    loadCardData();
   }, [card, isOpen]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -574,16 +635,16 @@ function CardModal({ isOpen, onClose, onSubmit, card, productName }: CardModalPr
         title,
         ingredients,
         instructions,
-        imageUrl: imagePreview,
+        imageUrl: card.imageUrl, // Keep existing path if no new file
         updatedAt: new Date(),
-      });
+      }, imageFile);
     } else {
       onSubmit({
         title,
         ingredients,
         instructions,
-        imageUrl: imagePreview,
-      });
+        imageUrl: null,
+      }, imageFile);
     }
   };
 
@@ -710,6 +771,31 @@ interface CardViewerProps {
 
 function CardViewer({ card, onClose }: CardViewerProps) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const loadImage = async () => {
+      if (card.imageUrl) {
+        if (card.imageUrl.startsWith('cards/')) {
+          // Load from Storage
+          try {
+            const { cardsService } = await import('../lib/supabase-service');
+            const url = await cardsService.getImageUrl(card.imageUrl);
+            setImageUrl(url);
+          } catch (error) {
+            console.error('Error loading image:', error);
+            setImageUrl(null);
+          }
+        } else {
+          // Legacy base64 or direct URL
+          setImageUrl(card.imageUrl);
+        }
+      } else {
+        setImageUrl(null);
+      }
+    };
+    loadImage();
+  }, [card.imageUrl]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -747,8 +833,8 @@ function CardViewer({ card, onClose }: CardViewerProps) {
             >
               <div className="recipe-card bg-card h-full flex flex-col">
                 <div className="recipe-card-image flex-1">
-                  {card.imageUrl ? (
-                    <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={card.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
                       <ImageIcon className="w-24 h-24 text-muted-foreground/30" />
@@ -806,4 +892,7 @@ function CardViewer({ card, onClose }: CardViewerProps) {
     </div>
   );
 }
+
+
+
 

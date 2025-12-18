@@ -26,3 +26,5 @@ GROUP BY assignee
 ORDER BY assignee;
 
 -- This should only show "Dave" and "Mej" after running the script
+
+
