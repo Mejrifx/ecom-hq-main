@@ -2,29 +2,32 @@
 -- This removes large base64 data URLs that are causing database performance issues
 -- Run this in your Supabase SQL Editor
 
--- Option 1: Clear all image_url data (you'll need to re-upload images)
--- Uncomment the line below to run:
--- UPDATE cards SET image_url = NULL WHERE image_url IS NOT NULL AND image_url NOT LIKE 'cards/%';
-
--- Option 2: View cards with base64 images (to see what will be affected)
+-- STEP 1: First, let's see how many cards are affected
 SELECT 
-  id,
-  title,
-  LENGTH(image_url) as image_data_size_bytes,
-  LENGTH(image_url) / 1024 as image_data_size_kb
+  COUNT(*) as total_cards_with_base64,
+  AVG(LENGTH(image_url)) / 1024 as avg_size_kb,
+  SUM(LENGTH(image_url)) / 1024 / 1024 as total_size_mb
 FROM cards
 WHERE image_url IS NOT NULL 
-  AND image_url NOT LIKE 'cards/%'
-  AND LENGTH(image_url) > 1000
-ORDER BY LENGTH(image_url) DESC;
+  AND image_url NOT LIKE 'cards/%';
 
--- After running Option 2, you can decide whether to:
--- 1. Delete all cards with large images and recreate them
--- 2. Clear just the image_url field (run Option 1)
--- 3. Manually migrate images to Storage (contact support if needed)
+-- STEP 2: Clear base64 images in small batches (run this multiple times if needed)
+-- This clears 10 cards at a time to avoid timeout
+UPDATE cards 
+SET image_url = NULL 
+WHERE id IN (
+  SELECT id 
+  FROM cards 
+  WHERE image_url IS NOT NULL 
+    AND image_url NOT LIKE 'cards/%'
+  LIMIT 10
+);
 
--- To clear all card images:
--- UPDATE cards SET image_url = NULL WHERE image_url NOT LIKE 'cards/%';
+-- STEP 3: Check if there are more to clear (run this after each batch)
+SELECT COUNT(*) as remaining_cards_with_base64
+FROM cards
+WHERE image_url IS NOT NULL AND image_url NOT LIKE 'cards/%';
 
--- To delete all cards with base64 images:
+-- ALTERNATIVE: If you want to just delete all cards with base64 images instead:
+-- (Uncomment and run this if you prefer to start fresh)
 -- DELETE FROM cards WHERE image_url IS NOT NULL AND image_url NOT LIKE 'cards/%';
