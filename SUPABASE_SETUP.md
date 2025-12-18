@@ -1,5 +1,18 @@
 # Supabase Setup Instructions
 
+## 0. CORS Configuration (REQUIRED for Netlify)
+
+⚠️ **IMPORTANT:** If deploying to Netlify, do this FIRST or you'll get login errors!
+
+1. Go to your Supabase project dashboard: https://supabase.com/dashboard
+2. Navigate to **Authentication** → **URL Configuration**
+3. Add your deployment URL:
+   - **Site URL**: `https://your-site.netlify.app` (replace with your actual Netlify URL)
+   - **Redirect URLs**: Add `https://your-site.netlify.app/**` (with wildcard)
+4. Save changes
+
+**Why this is needed:** Without this, your Netlify site will be blocked by CORS policy and authentication will fail with "Failed to fetch" errors.
+
 ## 1. Run Database Schema
 
 1. Go to your Supabase project dashboard: https://supabase.com/dashboard
