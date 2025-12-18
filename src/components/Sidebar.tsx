@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   FileText,
   CheckSquare,
-  Brush,
   UtensilsCrossed,
   FolderOpen,
   Settings,
@@ -24,7 +23,6 @@ const navItems = [
   { path: '/tasks', label: 'Tasks', icon: CheckSquare },
   { path: '/notes', label: 'Notes', icon: FileText },
   { path: '/tables', label: 'Tables', icon: Table },
-  { path: '/whiteboard', label: 'Whiteboard', icon: Brush },
   { path: '/files', label: 'Files', icon: FolderOpen },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];

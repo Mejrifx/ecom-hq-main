@@ -594,37 +594,4 @@ export const cardsService = {
   },
 };
 
-// Whiteboard
-export const whiteboardService = {
-  async get(): Promise<{ canvasData: string; updatedAt: Date } | null> {
-    const { data, error } = await supabase
-      .from('whiteboard')
-      .select('canvas_data, updated_at')
-      .eq('id', '00000000-0000-0000-0000-000000000000')
-      .single();
-    
-    if (error) {
-      if (error.code === 'PGRST116') return null; // No row found
-      throw error;
-    }
-    
-    return {
-      canvasData: data.canvas_data || '',
-      updatedAt: new Date(data.updated_at),
-    };
-  },
-
-  async save(canvasData: string): Promise<void> {
-    const userId = await getCurrentUserId();
-    const { error } = await supabase
-      .from('whiteboard')
-      .update({
-        canvas_data: canvasData,
-        updated_by: userId,
-      })
-      .eq('id', '00000000-0000-0000-0000-000000000000');
-    
-    if (error) throw error;
-  },
-};
 
