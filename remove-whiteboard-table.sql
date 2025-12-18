@@ -1,8 +1,15 @@
 -- Remove Whiteboard table and all related objects
 -- Run this in your Supabase SQL Editor
 
--- Step 1: Remove from Realtime publication
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS whiteboard;
+-- Step 1: Remove from Realtime publication (if it exists)
+-- Note: This will error if table isn't in publication, which is fine
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime DROP TABLE whiteboard;
+EXCEPTION WHEN OTHERS THEN
+  -- Table might not be in publication, ignore error
+  NULL;
+END $$;
 
 -- Step 2: Drop the trigger
 DROP TRIGGER IF EXISTS update_whiteboard_updated_at ON whiteboard;
